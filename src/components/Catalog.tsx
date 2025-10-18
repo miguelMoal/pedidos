@@ -1,19 +1,10 @@
-import image_0c45253783cab781642bfb658e32c830b3a9b37f from 'figma:asset/0c45253783cab781642bfb658e32c830b3a9b37f.png';
-import image_e7539ee72f215a454e67fef67ab0156d73bdc659 from 'figma:asset/e7539ee72f215a454e67fef67ab0156d73bdc659.png';
-import image_040c204648cb4d42ff7316aeba12dbf0e6525bb8 from 'figma:asset/040c204648cb4d42ff7316aeba12dbf0e6525bb8.png';
-import image_e979ffd21e9cbe33011b4e4f8f0084181b6b84da from 'figma:asset/e979ffd21e9cbe33011b4e4f8f0084181b6b84da.png';
-import image_de6ef150b2d1c46fb48ae9cffb73024268699c26 from 'figma:asset/de6ef150b2d1c46fb48ae9cffb73024268699c26.png';
-import image_1fb5a84624f51476c33e1b90912cb44c57d40d1d from 'figma:asset/1fb5a84624f51476c33e1b90912cb44c57d40d1d.png';
-import image_10674549e1087c899d3be1c2a86eb79b2c46f6ae from 'figma:asset/10674549e1087c899d3be1c2a86eb79b2c46f6ae.png';
-import image_9e507b2c5c9e8ada93fe4d3adfbaa432e2290684 from 'figma:asset/9e507b2c5c9e8ada93fe4d3adfbaa432e2290684.png';
-import image_4688925daf76a3361de541d15592f70eaef0be38 from 'figma:asset/4688925daf76a3361de541d15592f70eaef0be38.png';
-import image_8e967bc91dda951fa209694cca4300e3cb25ee9f from 'figma:asset/8e967bc91dda951fa209694cca4300e3cb25ee9f.png';
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { OrderItem } from '../App';
 import { Button } from './ui/button';
 import { Check, Plus } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { useProductsStore, CatalogProduct } from '../store/productsStore';
+import { useOrderStore } from '../store/ordersStore';
 
 type CatalogProps = {
   currentOrderItems: OrderItem[];
@@ -22,76 +13,28 @@ type CatalogProps = {
   total: number;
 };
 
-const catalogProducts = [
+// Productos mock como fallback
+const mockCatalogProducts: CatalogProduct[] = [
   {
     id: '1',
     name: 'Café del día',
     price: 12.99,
-    image: image_9e507b2c5c9e8ada93fe4d3adfbaa432e2290684,
+    image: 'https://via.placeholder.com/200x200?text=Café',
     category: 'Cafetería'
   },
   {
     id: '2',
     name: 'Concha de Vainilla',
     price: 8.99,
-    image: image_4688925daf76a3361de541d15592f70eaef0be38,
+    image: 'https://via.placeholder.com/200x200?text=Concha',
     category: 'Panadería'
   },
   {
     id: '3',
     name: 'Burrito',
     price: 3.99,
-    image: image_10674549e1087c899d3be1c2a86eb79b2c46f6ae,
+    image: 'https://via.placeholder.com/200x200?text=Burrito',
     category: 'Comida'
-  },
-  {
-    id: '4',
-    name: 'Donitas Glaseadas',
-    price: 14.99,
-    image: image_1fb5a84624f51476c33e1b90912cb44c57d40d1d,
-    category: 'Postres'
-  },
-  {
-    id: '5',
-    name: 'Capuchino + Dona',
-    price: 10.99,
-    image: image_de6ef150b2d1c46fb48ae9cffb73024268699c26,
-    category: 'Combos'
-  },
-  {
-    id: '6',
-    name: 'Combo Bien Puesto',
-    price: 6.99,
-    image: image_e979ffd21e9cbe33011b4e4f8f0084181b6b84da,
-    category: 'Combos'
-  },
-  {
-    id: '7',
-    name: 'Hot Dog',
-    price: 7.99,
-    image: image_8e967bc91dda951fa209694cca4300e3cb25ee9f,
-    category: 'Snacks'
-  },
-  {
-    id: '8',
-    name: 'Botana + Soda',
-    price: 5.99,
-    image: image_040c204648cb4d42ff7316aeba12dbf0e6525bb8,
-    category: 'Combos'
-  },
-  {
-    id: '9',
-    name: 'Helado',
-    price: 9.99,
-    image: image_0c45253783cab781642bfb658e32c830b3a9b37f,
-    category: 'Postres'
-  },
-  {
-    id: '10',
-    name: 'Soda',
-    price: 2.99,
-    image: image_e7539ee72f215a454e67fef67ab0156d73bdc659,
-    category: 'Bebidas'
   }
 ];
 
@@ -102,20 +45,50 @@ export default function Catalog({
   total
 }: CatalogProps) {
   const [hasChanges, setHasChanges] = useState(false);
+  
+  // Stores
+  const { getCatalogProducts, loadAllProducts, loading: productsLoading } = useProductsStore();
+  const { addProductToOrder, order } = useOrderStore();
+  
+  // Cargar productos al montar el componente
+  useEffect(() => {
+    loadAllProducts();
+  }, [loadAllProducts]);
+  
+  // Obtener productos (Supabase o mock)
+  const catalogProducts = getCatalogProducts().length > 0 ? getCatalogProducts() : mockCatalogProducts;
 
-  const handleAddItem = (product: typeof catalogProducts[0]) => {
-    addOrderItem({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      quantity: 1,
-      image: product.image
-    });
-    setHasChanges(true);
-    toast.success(`${product.name} agregado`, {
-      description: '✔ Producto añadido al pedido',
-      duration: 2000
-    });
+  const handleAddItem = async (product: CatalogProduct) => {
+    // Si hay una orden activa de Supabase, usar la función del store
+    if (order) {
+      try {
+        await addProductToOrder(product.id, 1);
+        setHasChanges(true);
+        toast.success(`${product.name} agregado`, {
+          description: '✔ Producto añadido al pedido',
+          duration: 2000
+        });
+      } catch (error) {
+        toast.error('Error al agregar producto', {
+          description: 'Intenta de nuevo',
+          duration: 2000
+        });
+      }
+    } else {
+      // Para datos mock
+      addOrderItem({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        quantity: 1,
+        image: product.image
+      });
+      setHasChanges(true);
+      toast.success(`${product.name} agregado`, {
+        description: '✔ Producto añadido al pedido',
+        duration: 2000
+      });
+    }
   };
 
   const getItemQuantity = (productId: string) => {
@@ -132,6 +105,18 @@ export default function Catalog({
     }
     onSaveAndReturn();
   };
+
+  // Mostrar loading mientras se cargan los productos
+  if (productsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando catálogo...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col pb-[200px]">
@@ -156,10 +141,13 @@ export default function Catalog({
                 className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
               >
                 <div className="aspect-square bg-gray-100 relative">
-                  <ImageWithFallback
+                  <img
                     src={product.image}
                     alt={product.name}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODgiIGhlaWdodD0iODgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBvcGFjaXR5PSIuMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIzLjciPjxyZWN0IHg9IjE2IiB5PSIxNiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2IiByeD0iNiIvPjxwYXRoIGQ9Im0xNiA1OCAxNi0xOCAzMiAzMiIvPjxjaXJjbGUgY3g9IjUzIiBjeT0iMzUiIHI9IjciLz48L3N2Zz4KCg==';
+                    }}
                   />
                   {quantity > 0 && (
                     <div className="absolute top-2 right-2 bg-[#E31525] text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">

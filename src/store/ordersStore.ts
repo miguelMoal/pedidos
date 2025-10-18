@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Order, OrderUpdate } from '../supabase/actions/orders';
-import { getOrderById, getOrderWithItems, updateOrder, updateItemQuantity, removeItemFromOrder } from '../supabase/actions/orders';
+import { getOrderById, getOrderWithItems, updateOrder, updateItemQuantity, removeItemFromOrder, addProductToOrder } from '../supabase/actions/orders';
 
 // Tipo para los productos de la orden
 export type OrderItem = {
@@ -31,6 +31,7 @@ interface OrderState {
   updateOrderStatus: (orderData: OrderUpdate) => Promise<void>;
   updateItemQuantityInOrder: (itemId: string, quantity: number) => Promise<void>;
   removeItemFromOrder: (itemId: string) => Promise<void>;
+  addProductToOrder: (productId: string, quantity?: number) => Promise<void>;
   
   // Utilidades
   clearOrder: () => void;
@@ -157,6 +158,26 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       set({ orderItems: updatedItems, loading: false });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error al eliminar item';
+      set({ error: errorMessage, loading: false });
+    }
+  },
+
+  addProductToOrder: async (productId: string, quantity: number = 1) => {
+    const { order } = get();
+    
+    if (!order) {
+      set({ error: 'No hay orden activa' });
+      return;
+    }
+
+    set({ loading: true, error: null });
+    try {
+      await addProductToOrder(order.id, parseInt(productId), quantity);
+      
+      // Recargar la orden para obtener los items actualizados
+      await get().loadOrderWithItems(order.id);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al agregar producto';
       set({ error: errorMessage, loading: false });
     }
   },

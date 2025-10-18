@@ -183,3 +183,59 @@ export const removeItemFromOrder = async (itemId: number) => {
     throw error;
   }
 };
+
+// Agregar un producto a la orden
+export const addProductToOrder = async (orderId: number, productId: number, quantity: number = 1) => {
+  try {
+    // Primero verificar si el producto ya existe en la orden
+    const { data: existingItem, error: checkError } = await supabase
+      .from('item_order')
+      .select('*')
+      .eq('order_id', orderId)
+      .eq('product_id', productId)
+      .single();
+
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows found
+      console.error('Error al verificar item existente:', checkError);
+      throw checkError;
+    }
+
+    if (existingItem) {
+      // Si ya existe, actualizar la cantidad
+      const { data, error } = await supabase
+        .from('item_order')
+        .update({ quantity: existingItem.quantity + quantity })
+        .eq('id', existingItem.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error al actualizar cantidad del item:', error);
+        throw error;
+      }
+
+      return data;
+    } else {
+      // Si no existe, crear nuevo item
+      const { data, error } = await supabase
+        .from('item_order')
+        .insert({
+          order_id: orderId,
+          product_id: productId,
+          quantity: quantity
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error al agregar producto a la orden:', error);
+        throw error;
+      }
+
+      return data;
+    }
+  } catch (error) {
+    console.error('Error en addProductToOrder:', error);
+    throw error;
+  }
+};

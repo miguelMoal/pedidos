@@ -297,6 +297,7 @@ export default function App() {
             total={calculateTotal()}
             onPaymentComplete={handlePaymentComplete}
             onBack={() => setCurrentScreen('confirmation')}
+            onNavigateToTracking={() => setCurrentScreen('tracking')}
           />
         )}
 

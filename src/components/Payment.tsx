@@ -12,13 +12,15 @@ type PaymentProps = {
   total: number;
   onPaymentComplete: (method: 'card' | 'transfer') => void;
   onBack: () => void;
+  onNavigateToTracking?: () => void;
 };
 
 export default function Payment({
   orderItems,
   total,
   onPaymentComplete,
-  onBack
+  onBack,
+  onNavigateToTracking
 }: PaymentProps) {
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'transfer'>('card');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -123,7 +125,7 @@ export default function Payment({
 
         {/* Payment Confirmed View */}
         <div className="flex-1 max-w-2xl mx-auto w-full px-4 py-6">
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center">
+          <div className="bg-white rounded-2xl py-6 px-4 shadow-sm border border-gray-100 text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
@@ -145,7 +147,7 @@ export default function Payment({
             </div>
             
             <Button
-              onClick={onBack}
+              onClick={onNavigateToTracking || onBack}
               className="w-full bg-[#046741] hover:bg-[#035530] text-white h-12 rounded-xl"
             >
               Continuar al seguimiento

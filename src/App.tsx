@@ -57,7 +57,7 @@ export default function App() {
   const [orderStatus, setOrderStatus] = useState<OrderStatus>(getInitialStatus(getInitialScreenFromURL()));
   
   // Store de órdenes
-  const { order, orderItems: supabaseOrderItems, loading, error, loadOrderWithItems, updateOrderStatus } = useOrderStore();
+  const { order, orderItems: supabaseOrderItems, loading, error, loadOrderWithItems, updateOrderStatus, updateItemQuantityInOrder, removeItemFromOrder } = useOrderStore();
   
   // Mock order from WhatsApp
   const [orderItems, setOrderItems] = useState<OrderItem[]>([
@@ -130,13 +130,18 @@ export default function App() {
     return calculateSubtotal() + shippingCost;
   };
 
-  const updateOrderItem = (id: string, quantity: number) => {
-    // Si estamos usando datos de Supabase, no permitir edición por ahora
+  const updateOrderItem = async (id: string, quantity: number) => {
+    // Si estamos usando datos de Supabase, usar las funciones del store
     if (supabaseOrderItems.length > 0) {
-      console.log('No se puede editar orden desde Supabase en este momento');
+      if (quantity === 0) {
+        await removeItemFromOrder(id);
+      } else {
+        await updateItemQuantityInOrder(id, quantity);
+      }
       return;
     }
     
+    // Para datos mock
     if (quantity === 0) {
       setOrderItems(orderItems.filter(item => item.id !== id));
     } else {

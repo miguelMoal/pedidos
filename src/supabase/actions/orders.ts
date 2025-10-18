@@ -58,6 +58,7 @@ export const getOrderWithItems = async (orderId: number) => {
         item_order (
           id,
           product_id,
+          quantity,
           products (
             id,
             name,
@@ -139,6 +140,46 @@ export const getOrdersByStatus = async (status: Order['status']): Promise<Order[
     return data || [];
   } catch (error) {
     console.error('Error en getOrdersByStatus:', error);
+    throw error;
+  }
+};
+
+// Actualizar cantidad de un item en la orden
+export const updateItemQuantity = async (itemId: number, quantity: number) => {
+  try {
+    const { data, error } = await supabase
+      .from('item_order')
+      .update({ quantity })
+      .eq('id', itemId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error al actualizar cantidad del item:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error en updateItemQuantity:', error);
+    throw error;
+  }
+};
+
+// Eliminar un item de la orden
+export const removeItemFromOrder = async (itemId: number) => {
+  try {
+    const { error } = await supabase
+      .from('item_order')
+      .delete()
+      .eq('id', itemId);
+
+    if (error) {
+      console.error('Error al eliminar item de la orden:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error en removeItemFromOrder:', error);
     throw error;
   }
 };

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Order, OrderUpdate } from '../supabase/actions/orders';
-import { getOrderById, getOrderWithItems, updateOrder } from '../supabase/actions/orders';
+import { getOrderById, getOrderWithItems, updateOrder, updateItemQuantity, removeItemFromOrder } from '../supabase/actions/orders';
 
 // Tipo para los productos de la orden
 export type OrderItem = {
@@ -9,6 +9,7 @@ export type OrderItem = {
   price: number;
   quantity: number;
   image: string;
+  itemOrderId?: number; // ID del item_order para actualizaciones
 };
 
 interface OrderState {
@@ -28,6 +29,8 @@ interface OrderState {
   loadOrder: (orderId: number) => Promise<void>;
   loadOrderWithItems: (orderId: number) => Promise<void>;
   updateOrderStatus: (orderData: OrderUpdate) => Promise<void>;
+  updateItemQuantityInOrder: (itemId: string, quantity: number) => Promise<void>;
+  removeItemFromOrder: (itemId: string) => Promise<void>;
   
   // Utilidades
   clearOrder: () => void;
@@ -72,8 +75,9 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         id: item.product_id.toString(),
         name: item.products.name,
         price: item.products.price,
-        quantity: 1, // Por defecto cantidad 1, se puede ajustar según necesidades
-        image: item.products.image_url
+        quantity: item.quantity || 1, // Usar la cantidad de la base de datos
+        image: item.products.image_url,
+        itemOrderId: item.id // ID del item_order para actualizaciones
       })) || [];
 
       set({ 
@@ -105,6 +109,54 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       set({ order: updatedOrder, loading: false });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error al actualizar orden';
+      set({ error: errorMessage, loading: false });
+    }
+  },
+
+  updateItemQuantityInOrder: async (itemId: string, quantity: number) => {
+    const { orderItems } = get();
+    const item = orderItems.find(item => item.id === itemId);
+    
+    if (!item || !item.itemOrderId) {
+      set({ error: 'Item no encontrado o sin ID de orden' });
+      return;
+    }
+
+    set({ loading: true, error: null });
+    try {
+      await updateItemQuantity(item.itemOrderId, quantity);
+      
+      // Actualizar el estado local
+      const updatedItems = orderItems.map(orderItem => 
+        orderItem.id === itemId ? { ...orderItem, quantity } : orderItem
+      );
+      
+      set({ orderItems: updatedItems, loading: false });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al actualizar cantidad';
+      set({ error: errorMessage, loading: false });
+    }
+  },
+
+  removeItemFromOrder: async (itemId: string) => {
+    const { orderItems } = get();
+    const item = orderItems.find(item => item.id === itemId);
+    
+    if (!item || !item.itemOrderId) {
+      set({ error: 'Item no encontrado o sin ID de orden' });
+      return;
+    }
+
+    set({ loading: true, error: null });
+    try {
+      await removeItemFromOrder(item.itemOrderId);
+      
+      // Remover del estado local
+      const updatedItems = orderItems.filter(orderItem => orderItem.id !== itemId);
+      
+      set({ orderItems: updatedItems, loading: false });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al eliminar item';
       set({ error: errorMessage, loading: false });
     }
   },

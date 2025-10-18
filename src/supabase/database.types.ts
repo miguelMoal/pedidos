@@ -20,21 +20,21 @@ export type Database = {
           id: number
           order_id: number | null
           product_id: number | null
-          quntity: number
+          quantity: number
         }
         Insert: {
           created_at?: string
           id?: number
           order_id?: number | null
           product_id?: number | null
-          quntity?: number
+          quantity?: number
         }
         Update: {
           created_at?: string
           id?: number
           order_id?: number | null
           product_id?: number | null
-          quntity?: number
+          quantity?: number
         }
         Relationships: [
           {

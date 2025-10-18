@@ -50,6 +50,9 @@ export default function Catalog({
   const { getCatalogProducts, loadAllProducts, loading: productsLoading } = useProductsStore();
   const { addProductToOrder, order } = useOrderStore();
   
+  // Verificar si la orden ya está pagada
+  const isPaid = order?.status === 'IN_PROGRESS' || order?.status === 'READY' || order?.status === 'DELIVERED';
+  
   // Cargar productos al montar el componente
   useEffect(() => {
     loadAllProducts();
@@ -59,6 +62,15 @@ export default function Catalog({
   const catalogProducts = getCatalogProducts().length > 0 ? getCatalogProducts() : mockCatalogProducts;
 
   const handleAddItem = async (product: CatalogProduct) => {
+    // No permitir agregar productos si la orden ya está pagada
+    if (isPaid) {
+      toast.error('No se puede modificar', {
+        description: 'Este pedido ya ha sido pagado',
+        duration: 2000
+      });
+      return;
+    }
+
     // Si hay una orden activa de Supabase, usar la función del store
     if (order) {
       try {
@@ -161,10 +173,15 @@ export default function Catalog({
                   <p className="text-gray-900 mb-3">${product.price.toFixed(2)}</p>
                   <button
                     onClick={() => handleAddItem(product)}
-                    className="w-full bg-[#046741] hover:bg-[#035530] text-white py-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
+                    disabled={isPaid}
+                    className={`w-full py-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors ${
+                      isPaid 
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                        : 'bg-[#046741] hover:bg-[#035530] text-white'
+                    }`}
                   >
                     <Plus className="w-4 h-4" />
-                    <span className="text-sm">Agregar</span>
+                    <span className="text-sm">{isPaid ? 'Pagado' : 'Agregar'}</span>
                   </button>
                 </div>
               </div>

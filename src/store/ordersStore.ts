@@ -115,8 +115,15 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   },
 
   updateItemQuantityInOrder: async (itemId: string, quantity: number) => {
-    const { orderItems } = get();
+    const { orderItems, order } = get();
     const item = orderItems.find(item => item.id === itemId);
+    
+    // Verificar si la orden ya está pagada
+    const isPaid = order?.status === 'IN_PROGRESS' || order?.status === 'READY' || order?.status === 'DELIVERED';
+    if (isPaid) {
+      set({ error: 'No se puede modificar una orden ya pagada' });
+      return;
+    }
     
     if (!item || !item.itemOrderId) {
       set({ error: 'Item no encontrado o sin ID de orden' });
@@ -140,8 +147,15 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   },
 
   removeItemFromOrder: async (itemId: string) => {
-    const { orderItems } = get();
+    const { orderItems, order } = get();
     const item = orderItems.find(item => item.id === itemId);
+    
+    // Verificar si la orden ya está pagada
+    const isPaid = order?.status === 'IN_PROGRESS' || order?.status === 'READY' || order?.status === 'DELIVERED';
+    if (isPaid) {
+      set({ error: 'No se puede modificar una orden ya pagada' });
+      return;
+    }
     
     if (!item || !item.itemOrderId) {
       set({ error: 'Item no encontrado o sin ID de orden' });
@@ -167,6 +181,13 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     
     if (!order) {
       set({ error: 'No hay orden activa' });
+      return;
+    }
+
+    // Verificar si la orden ya está pagada
+    const isPaid = order?.status === 'IN_PROGRESS' || order?.status === 'READY' || order?.status === 'DELIVERED';
+    if (isPaid) {
+      set({ error: 'No se puede modificar una orden ya pagada' });
       return;
     }
 

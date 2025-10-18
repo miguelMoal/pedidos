@@ -25,10 +25,13 @@ export default function OrderConfirmation({
   onProceedToPayment
 }: OrderConfirmationProps) {
   // Obtener datos de Supabase
-  const { orderItems: supabaseOrderItems, loading } = useOrderStore();
+  const { orderItems: supabaseOrderItems, loading, order } = useOrderStore();
   
   // Usar datos de Supabase si están disponibles, sino usar los mock
   const orderItems = supabaseOrderItems.length > 0 ? supabaseOrderItems : mockOrderItems;
+  
+  // Verificar si la orden ya está pagada
+  const isPaid = order?.status === 'IN_PROGRESS' || order?.status === 'READY' || order?.status === 'DELIVERED';
   return (
     <div className="min-h-screen flex flex-col pb-[320px]">
       {/* Header */}
@@ -39,10 +42,11 @@ export default function OrderConfirmation({
             variant="outline"
             size="sm"
             onClick={onEditOrder}
-            className="flex items-center gap-1.5"
+            disabled={isPaid}
+            className={`flex items-center gap-1.5 ${isPaid ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <Edit className="w-4 h-4" />
-            Editar
+            {isPaid ? 'Pagado' : 'Editar'}
           </Button>
         </div>
       </div>
@@ -70,21 +74,31 @@ export default function OrderConfirmation({
                 <p className="text-gray-600">${item.price.toFixed(2)}</p>
                 <div className="flex items-center gap-2 mt-2">
                   <button
-                    onClick={() => updateOrderItem(item.id, item.quantity - 1)}
-                    className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                    onClick={() => !isPaid && updateOrderItem(item.id, item.quantity - 1)}
+                    disabled={isPaid}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                      isPaid 
+                        ? 'bg-gray-100 cursor-not-allowed opacity-50' 
+                        : 'bg-gray-100 hover:bg-gray-200'
+                    }`}
                   >
                     {item.quantity === 1 ? (
-                      <Trash2 className="w-4 h-4 text-red-500" />
+                      <Trash2 className={`w-4 h-4 ${isPaid ? 'text-gray-400' : 'text-red-500'}`} />
                     ) : (
-                      <Minus className="w-4 h-4 text-gray-700" />
+                      <Minus className={`w-4 h-4 ${isPaid ? 'text-gray-400' : 'text-gray-700'}`} />
                     )}
                   </button>
                   <span className="w-8 text-center text-gray-900">{item.quantity}</span>
                   <button
-                    onClick={() => updateOrderItem(item.id, item.quantity + 1)}
-                    className="w-8 h-8 rounded-full bg-[#046741] flex items-center justify-center hover:bg-[#035530] transition-colors"
+                    onClick={() => !isPaid && updateOrderItem(item.id, item.quantity + 1)}
+                    disabled={isPaid}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                      isPaid 
+                        ? 'bg-gray-100 cursor-not-allowed opacity-50' 
+                        : 'bg-[#046741] hover:bg-[#035530]'
+                    }`}
                   >
-                    <Plus className="w-4 h-4 text-white" />
+                    <Plus className={`w-4 h-4 ${isPaid ? 'text-gray-400' : 'text-white'}`} />
                   </button>
                 </div>
               </div>
@@ -118,24 +132,32 @@ export default function OrderConfirmation({
 
           {/* Microcopy */}
           <p className="text-sm text-gray-500 mb-4">
-            Puedes modificar o agregar más productos antes de pagar.
+            {isPaid 
+              ? 'Este pedido ya ha sido pagado y no se puede modificar.' 
+              : 'Puedes modificar o agregar más productos antes de pagar.'
+            }
           </p>
 
           {/* Actions */}
           <div className="space-y-2">
-            <Button
-              onClick={onProceedToPayment}
-              className="w-full bg-[#046741] hover:bg-[#035530] text-white h-12 rounded-xl"
-            >
-              Ir a pagar →
-            </Button>
+            {!isPaid && (
+              <Button
+                onClick={onProceedToPayment}
+                className="w-full bg-[#046741] hover:bg-[#035530] text-white h-12 rounded-xl"
+              >
+                Ir a pagar →
+              </Button>
+            )}
             <Button
               onClick={onEditOrder}
               variant="outline"
-              className="w-full h-12 rounded-xl flex items-center justify-center gap-2"
+              disabled={isPaid}
+              className={`w-full h-12 rounded-xl flex items-center justify-center gap-2 ${
+                isPaid ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
               <Edit className="w-4 h-4" />
-              Editar pedido
+              {isPaid ? 'Pedido pagado' : 'Editar pedido'}
             </Button>
           </div>
         </div>

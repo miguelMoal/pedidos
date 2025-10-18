@@ -131,6 +131,13 @@ export default function App() {
   };
 
   const updateOrderItem = async (id: string, quantity: number) => {
+    // Verificar si la orden ya está pagada
+    const isPaid = order?.status === 'IN_PROGRESS' || order?.status === 'READY' || order?.status === 'DELIVERED';
+    if (isPaid) {
+      console.log('No se puede editar orden pagada');
+      return;
+    }
+
     // Si estamos usando datos de Supabase, usar las funciones del store
     if (supabaseOrderItems.length > 0) {
       if (quantity === 0) {
@@ -152,6 +159,13 @@ export default function App() {
   };
 
   const addOrderItem = (item: OrderItem) => {
+    // Verificar si la orden ya está pagada
+    const isPaid = order?.status === 'IN_PROGRESS' || order?.status === 'READY' || order?.status === 'DELIVERED';
+    if (isPaid) {
+      console.log('No se puede agregar items a orden pagada');
+      return;
+    }
+
     // Si estamos usando datos de Supabase, no permitir agregar items por ahora
     if (supabaseOrderItems.length > 0) {
       console.log('No se puede agregar items a orden desde Supabase en este momento');

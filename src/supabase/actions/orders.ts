@@ -193,15 +193,17 @@ export const addProductToOrder = async (orderId: number, productId: number, quan
       .select('*')
       .eq('order_id', orderId)
       .eq('product_id', productId)
-      .single();
+      .maybeSingle(); // Usar maybeSingle() en lugar de single() para evitar error cuando no hay resultados
 
-    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows found
+    if (checkError) {
       console.error('Error al verificar item existente:', checkError);
       throw checkError;
     }
 
     if (existingItem) {
       // Si ya existe, actualizar la cantidad
+      console.log(`Producto ${productId} ya existe en orden ${orderId}, actualizando cantidad de ${existingItem.quantity} a ${existingItem.quantity + quantity}`);
+      
       const { data, error } = await supabase
         .from('item_order')
         .update({ quantity: existingItem.quantity + quantity })
@@ -217,6 +219,8 @@ export const addProductToOrder = async (orderId: number, productId: number, quan
       return data;
     } else {
       // Si no existe, crear nuevo item
+      console.log(`Producto ${productId} no existe en orden ${orderId}, creando nuevo item con cantidad ${quantity}`);
+      
       const { data, error } = await supabase
         .from('item_order')
         .insert({

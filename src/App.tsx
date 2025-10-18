@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import image_9e507b2c5c9e8ada93fe4d3adfbaa432e2290684 from 'figma:asset/9e507b2c5c9e8ada93fe4d3adfbaa432e2290684.png';
 import image_4688925daf76a3361de541d15592f70eaef0be38 from 'figma:asset/4688925daf76a3361de541d15592f70eaef0be38.png';
 import image_10674549e1087c899d3be1c2a86eb79b2c46f6ae from 'figma:asset/10674549e1087c899d3be1c2a86eb79b2c46f6ae.png';
@@ -9,6 +9,7 @@ import OrderTracking from './components/OrderTracking';
 import NavigationStepper from './components/NavigationStepper';
 import AppHeader from './components/AppHeader';
 import { Toaster } from './components/ui/sonner';
+import { useOrderStore } from './store/ordersStore';
 
 export type OrderItem = {
   id: string;
@@ -36,6 +37,13 @@ function getInitialScreenFromURL(): Screen {
   return 'confirmation';
 }
 
+// Helper function to get order ID from URL
+function getOrderIdFromURL(): number | null {
+  const params = new URLSearchParams(window.location.search);
+  const orderId = params.get('orderId');
+  return orderId ? parseInt(orderId, 10) : null;
+}
+
 // Helper function to get initial status based on screen
 function getInitialStatus(screen: Screen): OrderStatus {
   if (screen === 'catalog') return 'EDITANDO';
@@ -47,6 +55,9 @@ function getInitialStatus(screen: Screen): OrderStatus {
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>(getInitialScreenFromURL());
   const [orderStatus, setOrderStatus] = useState<OrderStatus>(getInitialStatus(getInitialScreenFromURL()));
+  
+  // Store de órdenes
+  const { order, loading, error, loadOrder, updateOrderStatus } = useOrderStore();
   
   // Mock order from WhatsApp
   const [orderItems, setOrderItems] = useState<OrderItem[]>([
@@ -75,6 +86,14 @@ export default function App() {
 
   const [shippingCost] = useState(2.50);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'transfer' | null>(null);
+
+  // Cargar orden desde Supabase al montar el componente
+  useEffect(() => {
+    const orderId = getOrderIdFromURL();
+    if (orderId) {
+      loadOrder(orderId);
+    }
+  }, [loadOrder]);
 
   // Listen for URL changes on initial load and browser navigation
   useEffect(() => {
@@ -149,9 +168,65 @@ export default function App() {
     }
   };
 
-  const handleStatusUpdate = useCallback((status: OrderStatus) => {
+  const handleStatusUpdate = useCallback(async (status: OrderStatus) => {
     setOrderStatus(status);
-  }, []);
+    
+    // Mapear el estado local al estado de Supabase
+    let supabaseStatus: 'INIT' | 'IN_PROGRESS' | 'READY' | 'DELIVERED';
+    switch (status) {
+      case 'CREADO':
+      case 'EDITANDO':
+      case 'PENDIENTE_PAGO':
+        supabaseStatus = 'INIT';
+        break;
+      case 'PAGADO':
+      case 'PREPARANDO':
+        supabaseStatus = 'IN_PROGRESS';
+        break;
+      case 'EN_CAMINO':
+        supabaseStatus = 'READY';
+        break;
+      case 'ENTREGADO':
+        supabaseStatus = 'DELIVERED';
+        break;
+      default:
+        supabaseStatus = 'INIT';
+    }
+    
+    // Actualizar en Supabase
+    if (order) {
+      await updateOrderStatus({ status: supabaseStatus });
+    }
+  }, [order, updateOrderStatus]);
+
+  // Mostrar loading mientras se carga la orden
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando orden...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostrar error si hay algún problema
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error: {error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

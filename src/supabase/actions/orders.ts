@@ -48,6 +48,40 @@ export const getOrderById = async (orderId: number): Promise<Order | null> => {
   }
 };
 
+// Obtener una orden con sus productos relacionados
+export const getOrderWithItems = async (orderId: number) => {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        item_order (
+          id,
+          product_id,
+          products (
+            id,
+            name,
+            price,
+            image_url,
+            business
+          )
+        )
+      `)
+      .eq('id', orderId)
+      .single();
+
+    if (error) {
+      console.error('Error al obtener orden con productos:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error en getOrderWithItems:', error);
+    throw error;
+  }
+};
+
 // Actualizar una orden
 export const updateOrder = async (orderId: number, orderData: OrderUpdate): Promise<Order> => {
   try {

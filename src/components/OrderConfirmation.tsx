@@ -1,7 +1,9 @@
+import React from 'react';
 import { OrderItem } from '../App';
 import { Button } from './ui/button';
 import { ShoppingBag, Edit, Minus, Plus, Trash2 } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { useOrderStore } from '../store/ordersStore';
 
 type OrderConfirmationProps = {
   orderItems: OrderItem[];
@@ -14,7 +16,7 @@ type OrderConfirmationProps = {
 };
 
 export default function OrderConfirmation({
-  orderItems,
+  orderItems: mockOrderItems,
   updateOrderItem,
   subtotal,
   shippingCost,
@@ -22,6 +24,11 @@ export default function OrderConfirmation({
   onEditOrder,
   onProceedToPayment
 }: OrderConfirmationProps) {
+  // Obtener datos de Supabase
+  const { orderItems: supabaseOrderItems, loading } = useOrderStore();
+  
+  // Usar datos de Supabase si están disponibles, sino usar los mock
+  const orderItems = supabaseOrderItems.length > 0 ? supabaseOrderItems : mockOrderItems;
   return (
     <div className="min-h-screen flex flex-col pb-[320px]">
       {/* Header */}
@@ -49,10 +56,13 @@ export default function OrderConfirmation({
           >
             <div className="flex gap-4">
               <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
-                <ImageWithFallback
+                <img
                   src={item.image}
                   alt={item.name}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODgiIGhlaWdodD0iODgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBvcGFjaXR5PSIuMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIzLjciPjxyZWN0IHg9IjE2IiB5PSIxNiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2IiByeD0iNiIvPjxwYXRoIGQ9Im0xNiA1OCAxNi0xOCAzMiAzMiIvPjxjaXJjbGUgY3g9IjUzIiBjeT0iMzUiIHI9IjciLz48L3N2Zz4KCg==';
+                  }}
                 />
               </div>
               <div className="flex-1 min-w-0">

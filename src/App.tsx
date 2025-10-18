@@ -57,7 +57,7 @@ export default function App() {
   const [orderStatus, setOrderStatus] = useState<OrderStatus>(getInitialStatus(getInitialScreenFromURL()));
   
   // Store de órdenes
-  const { order, loading, error, loadOrder, updateOrderStatus } = useOrderStore();
+  const { order, orderItems: supabaseOrderItems, loading, error, loadOrderWithItems, updateOrderStatus } = useOrderStore();
   
   // Mock order from WhatsApp
   const [orderItems, setOrderItems] = useState<OrderItem[]>([
@@ -91,9 +91,9 @@ export default function App() {
   useEffect(() => {
     const orderId = getOrderIdFromURL();
     if (orderId) {
-      loadOrder(orderId);
+      loadOrderWithItems(orderId);
     }
-  }, [loadOrder]);
+  }, [loadOrderWithItems]);
 
   // Listen for URL changes on initial load and browser navigation
   useEffect(() => {
@@ -121,7 +121,9 @@ export default function App() {
   }, [currentScreen]);
 
   const calculateSubtotal = () => {
-    return orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    // Usar datos de Supabase si están disponibles, sino usar los mock
+    const itemsToUse = supabaseOrderItems.length > 0 ? supabaseOrderItems : orderItems;
+    return itemsToUse.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   };
 
   const calculateTotal = () => {
@@ -129,6 +131,12 @@ export default function App() {
   };
 
   const updateOrderItem = (id: string, quantity: number) => {
+    // Si estamos usando datos de Supabase, no permitir edición por ahora
+    if (supabaseOrderItems.length > 0) {
+      console.log('No se puede editar orden desde Supabase en este momento');
+      return;
+    }
+    
     if (quantity === 0) {
       setOrderItems(orderItems.filter(item => item.id !== id));
     } else {
@@ -139,6 +147,12 @@ export default function App() {
   };
 
   const addOrderItem = (item: OrderItem) => {
+    // Si estamos usando datos de Supabase, no permitir agregar items por ahora
+    if (supabaseOrderItems.length > 0) {
+      console.log('No se puede agregar items a orden desde Supabase en este momento');
+      return;
+    }
+    
     const existingItem = orderItems.find(i => i.id === item.id);
     if (existingItem) {
       updateOrderItem(item.id, existingItem.quantity + item.quantity);
@@ -244,7 +258,7 @@ export default function App() {
         
         {currentScreen === 'confirmation' && (
           <OrderConfirmation
-            orderItems={orderItems}
+            orderItems={supabaseOrderItems.length > 0 ? supabaseOrderItems : orderItems}
             updateOrderItem={updateOrderItem}
             subtotal={calculateSubtotal()}
             shippingCost={shippingCost}
@@ -262,7 +276,7 @@ export default function App() {
 
         {currentScreen === 'catalog' && (
           <Catalog
-            currentOrderItems={orderItems}
+            currentOrderItems={supabaseOrderItems.length > 0 ? supabaseOrderItems : orderItems}
             addOrderItem={addOrderItem}
             onSaveAndReturn={() => {
               setOrderStatus('CREADO');
@@ -274,7 +288,7 @@ export default function App() {
 
         {currentScreen === 'payment' && (
           <Payment
-            orderItems={orderItems}
+            orderItems={supabaseOrderItems.length > 0 ? supabaseOrderItems : orderItems}
             total={calculateTotal()}
             onPaymentComplete={handlePaymentComplete}
             onBack={() => setCurrentScreen('confirmation')}

@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { OrderItem } from '../App';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { ArrowLeft, CreditCard, Building2, Lock, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, CreditCard, Building2, Lock, CheckCircle2, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner@2.0.3';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { useOrderStore } from '../store/ordersStore';
 
 type PaymentProps = {
   orderItems: OrderItem[];
@@ -23,44 +23,71 @@ export default function Payment({
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'transfer'>('card');
   const [isProcessing, setIsProcessing] = useState(false);
   
+  // Store de órdenes
+  const { order, updateOrderStatus } = useOrderStore();
+  
   // Card fields
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
   const [cardName, setCardName] = useState('');
+  
+  // Verificar si la orden ya está pagada
+  const isPaid = order?.status === 'IN_PROGRESS' || order?.status === 'READY' || order?.status === 'DELIVERED';
 
   const handleCardPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!cardNumber || !cardExpiry || !cardCvv || !cardName) {
-      toast.error('Por favor completa todos los campos');
-      return;
-    }
-
     setIsProcessing(true);
     
-    // Simulate payment processing
-    setTimeout(() => {
+    try {
+      // Actualizar estado de la orden a PAGADO en Supabase
+      if (order) {
+        await updateOrderStatus({ status: 'IN_PROGRESS' });
+      }
+      
+      // Simulate payment processing
+      setTimeout(() => {
+        setIsProcessing(false);
+        toast.success('¡Pago exitoso!', {
+          description: 'Tu pedido está siendo preparado',
+          duration: 3000
+        });
+        onPaymentComplete('card');
+      }, 2000);
+    } catch (error) {
       setIsProcessing(false);
-      toast.success('¡Pago exitoso!', {
-        description: 'Tu pedido está siendo preparado',
+      toast.error('Error al procesar el pago', {
+        description: 'Intenta de nuevo',
         duration: 3000
       });
-      onPaymentComplete('card');
-    }, 2000);
+    }
   };
 
-  const handleTransferPayment = () => {
+  const handleTransferPayment = async () => {
     setIsProcessing(true);
     
-    setTimeout(() => {
+    try {
+      // Actualizar estado de la orden a PAGADO en Supabase
+      if (order) {
+        await updateOrderStatus({ status: 'IN_PROGRESS' });
+      }
+      
+      setTimeout(() => {
+        setIsProcessing(false);
+        toast.success('Comprobante recibido', {
+          description: 'Validaremos tu pago en breve',
+          duration: 3000
+        });
+        onPaymentComplete('transfer');
+      }, 1500);
+    } catch (error) {
       setIsProcessing(false);
-      toast.success('Comprobante recibido', {
-        description: 'Validaremos tu pago en breve',
+      toast.error('Error al procesar el pago', {
+        description: 'Intenta de nuevo',
         duration: 3000
       });
-      onPaymentComplete('transfer');
-    }, 1500);
+    }
   };
 
   const formatCardNumber = (value: string) => {
@@ -76,6 +103,58 @@ export default function Payment({
     }
     return cleaned;
   };
+
+  // Vista para cuando la orden ya está pagada
+  if (isPaid) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#F8F9FA]">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
+            <button
+              onClick={onBack}
+              className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-700" />
+            </button>
+            <h1 className="text-gray-900">Pago</h1>
+          </div>
+        </div>
+
+        {/* Payment Confirmed View */}
+        <div className="flex-1 max-w-2xl mx-auto w-full px-4 py-6">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            
+            <h2 className="text-xl text-gray-900 mb-2">¡Pago Confirmado!</h2>
+            <p className="text-gray-600 mb-6">
+              Tu pedido ha sido pagado exitosamente y está siendo preparado.
+            </p>
+            
+            <div className="bg-gray-50 rounded-xl p-4 mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-gray-600">Total pagado</span>
+                <span className="text-lg font-semibold text-gray-900">${total.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-500">Estado</span>
+                <span className="text-green-600 font-medium">Pagado</span>
+              </div>
+            </div>
+            
+            <Button
+              onClick={onBack}
+              className="w-full bg-[#046741] hover:bg-[#035530] text-white h-12 rounded-xl"
+            >
+              Continuar al seguimiento
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F9FA]">
@@ -244,6 +323,10 @@ export default function Payment({
                 'Pagar ahora'
               )}
             </Button>
+            
+            <p className="text-xs text-gray-500 text-center mt-2">
+              Puedes pagar sin completar los datos del formulario
+            </p>
           </form>
         )}
 

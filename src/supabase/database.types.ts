@@ -76,6 +76,7 @@ export type Database = {
           business: Database["public"]["Enums"]["BUSINESS_TYPE"]
           created_at: string
           id: number
+          image_url: string
           name: string
           price: number
         }
@@ -83,6 +84,7 @@ export type Database = {
           business?: Database["public"]["Enums"]["BUSINESS_TYPE"]
           created_at?: string
           id?: number
+          image_url: string
           name: string
           price: number
         }
@@ -90,6 +92,7 @@ export type Database = {
           business?: Database["public"]["Enums"]["BUSINESS_TYPE"]
           created_at?: string
           id?: number
+          image_url?: string
           name?: string
           price?: number
         }

@@ -247,3 +247,29 @@ export const addProductToOrder = async (orderId: number, productId: number, quan
     throw error;
   }
 };
+
+// Actualizar el estado de cupón aplicado en la orden
+export const updateCouponApplied = async (orderId: number, couponApplied: boolean): Promise<Order> => {
+  try {
+    console.log('updateCouponApplied - ID:', orderId);
+    console.log('updateCouponApplied - Cupón aplicado:', couponApplied);
+    
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ coupon_applied: couponApplied })
+      .eq('id', orderId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error al actualizar estado de cupón:', error);
+      throw error;
+    }
+
+    console.log('updateCouponApplied - Orden actualizada:', data);
+    return data;
+  } catch (error) {
+    console.error('Error en updateCouponApplied:', error);
+    throw error;
+  }
+};

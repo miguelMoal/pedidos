@@ -38,7 +38,7 @@ export default function Payment({
   const [isProcessing, setIsProcessing] = useState(false);
   
   // Store de órdenes
-  const { order, updateOrderStatus, loadOrderWithItems } = useOrderStore();
+  const { order, updateOrderStatus, loadOrderWithItems, updateCouponAppliedStatus } = useOrderStore();
   
   // Card fields
   const [cardNumber, setCardNumber] = useState('');
@@ -74,6 +74,16 @@ export default function Payment({
     if (result.valid && result.discount !== undefined) {
       setCouponApplied(true);
       setCouponDiscount(result.discount);
+      
+      // Actualizar el campo cupon_applied en la base de datos
+      try {
+        await updateCouponAppliedStatus(true);
+        console.log('Campo cupon_applied actualizado a true en la base de datos');
+      } catch (error) {
+        console.error('Error al actualizar cupon_applied:', error);
+        // No mostrar error al usuario ya que el cupón se aplicó correctamente
+      }
+      
       toast.success('¡Cupón aplicado!', {
         description: `Descuento de $${result.discount.toFixed(2)} aplicado`,
         duration: 3000
@@ -89,11 +99,20 @@ export default function Payment({
   };
 
   // Función para remover cupón
-  const handleRemoveCoupon = () => {
+  const handleRemoveCoupon = async () => {
     setCouponApplied(false);
     setCouponDiscount(0);
     setCouponCode('');
     setCouponError('');
+    
+    // Actualizar el campo cupon_applied en la base de datos
+    try {
+      await updateCouponAppliedStatus(false);
+      console.log('Campo cupon_applied actualizado a false en la base de datos');
+    } catch (error) {
+      console.error('Error al actualizar cupon_applied:', error);
+      // No mostrar error al usuario ya que el cupón se removió correctamente
+    }
   };
 
   // Calcular total con descuento
@@ -125,7 +144,7 @@ export default function Payment({
         
         console.log('Payment - Llamando a updateOrderStatus...');
         const updateData = { 
-          status: 'PAYED',
+          status: 'PAYED' as const,
           confirmation_code: verificationCode,
           coupon_applied: couponApplied
         };
@@ -181,7 +200,7 @@ export default function Payment({
         
         console.log('Payment - Llamando a updateOrderStatus (transfer)...');
         const updateData = { 
-          status: 'PAYED',
+          status: 'PAYED' as const,
           confirmation_code: verificationCode,
           coupon_applied: couponApplied
         };

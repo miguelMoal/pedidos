@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Order, OrderUpdate } from '../supabase/actions/orders';
-import { getOrderById, getOrderWithItems, updateOrder, updateItemQuantity, removeItemFromOrder, addProductToOrder } from '../supabase/actions/orders';
+import { getOrderById, getOrderWithItems, updateOrder, updateItemQuantity, removeItemFromOrder, addProductToOrder, updateCouponApplied } from '../supabase/actions/orders';
 
 // Tipo para los productos de la orden
 export type OrderItem = {
@@ -32,6 +32,7 @@ interface OrderState {
   updateItemQuantityInOrder: (itemId: string, quantity: number) => Promise<void>;
   removeItemFromOrder: (itemId: string) => Promise<void>;
   addProductToOrder: (productId: string, quantity?: number) => Promise<void>;
+  updateCouponAppliedStatus: (couponApplied: boolean) => Promise<void>;
   
   // Utilidades
   clearOrder: () => void;
@@ -194,6 +195,24 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       await get().loadOrderWithItems(order.id);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error al agregar producto';
+      set({ error: errorMessage, loading: false });
+    }
+  },
+
+  updateCouponAppliedStatus: async (couponApplied: boolean) => {
+    const { order } = get();
+    
+    if (!order) {
+      set({ error: 'No hay orden activa' });
+      return;
+    }
+
+    set({ loading: true, error: null });
+    try {
+      const updatedOrder = await updateCouponApplied(order.id, couponApplied);
+      set({ order: updatedOrder, loading: false });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al actualizar estado de cupón';
       set({ error: errorMessage, loading: false });
     }
   },

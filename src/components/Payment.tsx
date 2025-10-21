@@ -199,7 +199,7 @@ export default function Payment({
         const updateData = { 
           status: 'PAYED' as const,
           confirmation_code: verificationCode,
-          coupon_applied: couponApplied
+          coupon_applied: couponApplied ? (order.coupon_applied || null) : null
         };
         console.log('Payment - Datos a enviar a updateOrderStatus:', updateData);
         
@@ -255,7 +255,7 @@ export default function Payment({
         const updateData = { 
           status: 'PAYED' as const,
           confirmation_code: verificationCode,
-          coupon_applied: couponApplied
+          coupon_applied: couponApplied ? (order.coupon_applied || null) : null
         };
         console.log('Payment - Datos a enviar a updateOrderStatus (transfer):', updateData);
         

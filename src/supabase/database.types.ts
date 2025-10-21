@@ -20,18 +20,21 @@ export type Database = {
           created_at: string
           discount: number
           id: number
+          is_active: boolean | null
         }
         Insert: {
           code: string
           created_at?: string
           discount: number
           id?: number
+          is_active?: boolean | null
         }
         Update: {
           code?: string
           created_at?: string
           discount?: number
           id?: number
+          is_active?: boolean | null
         }
         Relationships: []
       }

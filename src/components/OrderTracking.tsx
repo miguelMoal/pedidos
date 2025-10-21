@@ -26,10 +26,6 @@ export default function OrderTracking({
   
   // Store de órdenes para obtener el código de verificación
   const { order } = useOrderStore();
-  
-  // Debug: mostrar información de la orden
-  console.log('OrderTracking - order:', order);
-  console.log('OrderTracking - confirmation_code:', order?.confirmation_code);
 
   // Auto-progression of order status
   useEffect(() => {

@@ -70,8 +70,6 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const orderData = await getOrderWithItems(orderId);
-      console.log('Store - Datos de orden cargados:', orderData);
-      console.log('Store - confirmation_code:', orderData.confirmation_code);
       
       // Transformar los datos de Supabase al formato esperado por el componente
       const orderItems: OrderItem[] = orderData.item_order?.map((item: any) => ({
@@ -88,7 +86,6 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         orderItems,
         loading: false 
       });
-      console.log('Store - Orden actualizada en store con confirmation_code:', orderData.confirmation_code);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error al cargar orden con productos';
       set({ error: errorMessage, loading: false });
@@ -98,19 +95,15 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   updateOrderStatus: async (orderData: OrderUpdate) => {
     const { order } = get();
     if (!order) {
-      console.log('Store - No hay orden para actualizar');
       set({ error: 'No hay orden para actualizar' });
       return;
     }
 
-    console.log('Store - Actualizando orden:', order.id, 'con datos:', orderData);
     set({ loading: true, error: null });
     try {
       const updatedOrder = await updateOrder(order.id, orderData);
-      console.log('Store - Orden actualizada en Supabase:', updatedOrder);
       set({ order: updatedOrder, loading: false });
     } catch (error) {
-      console.error('Store - Error al actualizar orden:', error);
       const errorMessage = error instanceof Error ? error.message : 'Error al actualizar orden';
       set({ error: errorMessage, loading: false });
     }

@@ -17,6 +17,8 @@ const generateVerificationCode = (): string => {
   return result;
 };
 
+import { validateCoupon as validateCouponSupabase, getAllCoupons } from '../supabase/actions/coupons';
+
 type PaymentProps = {
   orderItems: OrderItem[];
   total: number;
@@ -44,8 +46,60 @@ export default function Payment({
   const [cardCvv, setCardCvv] = useState('');
   const [cardName, setCardName] = useState('');
   
+  // Coupon fields
+  const [couponCode, setCouponCode] = useState('');
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponError, setCouponError] = useState('');
+  
   // Verificar si la orden ya está pagada
   const isPaid = order?.status === 'PAYED' || order?.status === 'READY' || order?.status === 'DELIVERED';
+
+  // Función para aplicar cupón
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError('Ingresa un código de cupón');
+      return;
+    }
+
+    setCouponError('');
+    
+    // Debug: listar todos los cupones disponibles
+    console.log('Listando todos los cupones disponibles:');
+    await getAllCoupons();
+    
+    const result = await validateCouponSupabase(couponCode.trim());
+    console.log('Resultado de validación:', result);
+    
+    if (result.valid && result.discount !== undefined) {
+      setCouponApplied(true);
+      setCouponDiscount(result.discount);
+      toast.success('¡Cupón aplicado!', {
+        description: `Descuento de $${result.discount.toFixed(2)} aplicado`,
+        duration: 3000
+      });
+    } else {
+      const errorMessage = result.error || 'Cupón no válido';
+      setCouponError(errorMessage);
+      toast.error('Cupón no válido', {
+        description: errorMessage,
+        duration: 3000
+      });
+    }
+  };
+
+  // Función para remover cupón
+  const handleRemoveCoupon = () => {
+    setCouponApplied(false);
+    setCouponDiscount(0);
+    setCouponCode('');
+    setCouponError('');
+  };
+
+  // Calcular total con descuento
+  const calculateTotalWithDiscount = () => {
+    return Math.max(0, total - couponDiscount);
+  };
 
   const handleCardPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,22 +109,17 @@ export default function Payment({
     try {
       // Generar código de verificación
       const verificationCode = generateVerificationCode();
-      console.log('Payment - Código generado:', verificationCode);
-      
       // Actualizar estado de la orden a PAGADO en Supabase con código de verificación
       if (order) {
-        console.log('Payment - Actualizando orden:', order.id, 'con código:', verificationCode);
         await updateOrderStatus({ 
           status: 'PAYED',
-          confirmation_code: verificationCode 
+          confirmation_code: verificationCode,
+          coupon_applied: couponApplied,
+          coupon_code: couponApplied ? couponCode : null
         });
-        console.log('Payment - Orden actualizada exitosamente');
         
         // Recargar la orden para obtener el código actualizado
-        console.log('Payment - Recargando orden para obtener código actualizado');
         await loadOrderWithItems(order.id);
-      } else {
-        console.log('Payment - No hay orden para actualizar');
       }
       
       // Simulate payment processing
@@ -100,18 +149,15 @@ export default function Payment({
       
       // Actualizar estado de la orden a PAGADO en Supabase con código de verificación
       if (order) {
-        console.log('Payment - Actualizando orden (transfer):', order.id, 'con código:', verificationCode);
         await updateOrderStatus({ 
           status: 'PAYED',
-          confirmation_code: verificationCode 
+          confirmation_code: verificationCode,
+          coupon_applied: couponApplied,
+          coupon_code: couponApplied ? couponCode : null
         });
-        console.log('Payment - Orden actualizada exitosamente (transfer)');
         
         // Recargar la orden para obtener el código actualizado
-        console.log('Payment - Recargando orden para obtener código actualizado (transfer)');
         await loadOrderWithItems(order.id);
-      } else {
-        console.log('Payment - No hay orden para actualizar (transfer)');
       }
       
       setTimeout(() => {
@@ -251,10 +297,71 @@ export default function Payment({
               </p>
             )}
             <div className="h-px bg-gray-200 my-2" />
-            <div className="flex justify-between">
-              <span className="text-gray-900">Total</span>
-              <span className="text-gray-900">${total.toFixed(2)}</span>
+            <div className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="text-gray-900">${total.toFixed(2)}</span>
+              </div>
+              {couponApplied && (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Descuento</span>
+                  <span>-${couponDiscount.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-gray-900 font-semibold border-t border-gray-200 pt-1">
+                <span>Total</span>
+                <span>${calculateTotalWithDiscount().toFixed(2)}</span>
+              </div>
             </div>
+          </div>
+        </div>
+
+        {/* Coupon Section */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <h3 className="text-gray-900 mb-3">Código de cupón</h3>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                type="text"
+                placeholder="Ingresa tu código de cupón"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                disabled={couponApplied}
+                className="flex-1"
+              />
+              {!couponApplied ? (
+                <Button
+                  type="button"
+                  onClick={handleApplyCoupon}
+                  variant="outline"
+                  className="px-4"
+                >
+                  Aplicar
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={handleRemoveCoupon}
+                  variant="outline"
+                  className="px-4 text-red-600 hover:text-red-700"
+                >
+                  Quitar
+                </Button>
+              )}
+            </div>
+            {couponError && (
+              <p className="text-red-500 text-sm">{couponError}</p>
+            )}
+            {couponApplied && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <p className="text-green-800 text-sm font-medium">
+                  ✓ Cupón aplicado: {couponCode}
+                </p>
+                <p className="text-green-700 text-sm">
+                  Descuento: -${couponDiscount.toFixed(2)}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

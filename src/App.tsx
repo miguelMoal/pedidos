@@ -132,7 +132,7 @@ export default function App() {
 
   const updateOrderItem = async (id: string, quantity: number) => {
     // Verificar si la orden ya está pagada
-    const isPaid = order?.status === 'IN_PROGRESS' || order?.status === 'READY' || order?.status === 'DELIVERED';
+    const isPaid = order?.status === 'PAYED' || order?.status === 'READY' || order?.status === 'DELIVERED';
     if (isPaid) {
       console.log('No se puede editar orden pagada');
       return;
@@ -160,7 +160,7 @@ export default function App() {
 
   const addOrderItem = (item: OrderItem) => {
     // Verificar si la orden ya está pagada
-    const isPaid = order?.status === 'IN_PROGRESS' || order?.status === 'READY' || order?.status === 'DELIVERED';
+    const isPaid = order?.status === 'PAYED' || order?.status === 'READY' || order?.status === 'DELIVERED';
     if (isPaid) {
       console.log('No se puede agregar items a orden pagada');
       return;
@@ -205,7 +205,7 @@ export default function App() {
     setOrderStatus(status);
     
     // Mapear el estado local al estado de Supabase
-    let supabaseStatus: 'INIT' | 'IN_PROGRESS' | 'READY' | 'DELIVERED';
+    let supabaseStatus: 'INIT' | 'PAYED' | 'IN_PROGRESS' | 'READY' | 'DELIVERED';
     switch (status) {
       case 'CREADO':
       case 'EDITANDO':
@@ -213,6 +213,8 @@ export default function App() {
         supabaseStatus = 'INIT';
         break;
       case 'PAGADO':
+        supabaseStatus = 'PAYED';
+        break;
       case 'PREPARANDO':
         supabaseStatus = 'IN_PROGRESS';
         break;

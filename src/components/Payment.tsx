@@ -35,7 +35,7 @@ export default function Payment({
   const [cardName, setCardName] = useState('');
   
   // Verificar si la orden ya está pagada
-  const isPaid = order?.status === 'IN_PROGRESS' || order?.status === 'READY' || order?.status === 'DELIVERED';
+  const isPaid = order?.status === 'PAYED' || order?.status === 'READY' || order?.status === 'DELIVERED';
 
   const handleCardPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +45,7 @@ export default function Payment({
     try {
       // Actualizar estado de la orden a PAGADO en Supabase
       if (order) {
-        await updateOrderStatus({ status: 'IN_PROGRESS' });
+        await updateOrderStatus({ status: 'PAYED' });
       }
       
       // Simulate payment processing
@@ -72,7 +72,7 @@ export default function Payment({
     try {
       // Actualizar estado de la orden a PAGADO en Supabase
       if (order) {
-        await updateOrderStatus({ status: 'IN_PROGRESS' });
+        await updateOrderStatus({ status: 'PAYED' });
       }
       
       setTimeout(() => {

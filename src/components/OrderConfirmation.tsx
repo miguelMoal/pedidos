@@ -31,7 +31,7 @@ export default function OrderConfirmation({
   const orderItems = supabaseOrderItems.length > 0 ? supabaseOrderItems : mockOrderItems;
   
   // Verificar si la orden ya está pagada
-  const isPaid = order?.status === 'IN_PROGRESS' || order?.status === 'READY' || order?.status === 'DELIVERED';
+  const isPaid = order?.status === 'PAYED' || order?.status === 'READY' || order?.status === 'DELIVERED';
   return (
     <div className="min-h-screen flex flex-col pb-[320px]">
       {/* Header */}

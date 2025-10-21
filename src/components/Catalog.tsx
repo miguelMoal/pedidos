@@ -51,7 +51,7 @@ export default function Catalog({
   const { addProductToOrder, order } = useOrderStore();
   
   // Verificar si la orden ya está pagada
-  const isPaid = order?.status === 'IN_PROGRESS' || order?.status === 'READY' || order?.status === 'DELIVERED';
+  const isPaid = order?.status === 'PAYED' || order?.status === 'READY' || order?.status === 'DELIVERED';
   
   // Cargar productos al montar el componente
   useEffect(() => {

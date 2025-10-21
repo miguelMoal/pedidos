@@ -7,6 +7,16 @@ import { ArrowLeft, CreditCard, Building2, Lock, CheckCircle2, CheckCircle } fro
 import { toast } from 'sonner@2.0.3';
 import { useOrderStore } from '../store/ordersStore';
 
+// Función para generar código de verificación
+const generateVerificationCode = (): string => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
 type PaymentProps = {
   orderItems: OrderItem[];
   total: number;
@@ -43,9 +53,15 @@ export default function Payment({
     setIsProcessing(true);
     
     try {
-      // Actualizar estado de la orden a PAGADO en Supabase
+      // Generar código de verificación
+      const verificationCode = generateVerificationCode();
+      
+      // Actualizar estado de la orden a PAGADO en Supabase con código de verificación
       if (order) {
-        await updateOrderStatus({ status: 'PAYED' });
+        await updateOrderStatus({ 
+          status: 'PAYED',
+          confirmation_code: verificationCode 
+        });
       }
       
       // Simulate payment processing
@@ -70,9 +86,15 @@ export default function Payment({
     setIsProcessing(true);
     
     try {
-      // Actualizar estado de la orden a PAGADO en Supabase
+      // Generar código de verificación
+      const verificationCode = generateVerificationCode();
+      
+      // Actualizar estado de la orden a PAGADO en Supabase con código de verificación
       if (order) {
-        await updateOrderStatus({ status: 'PAYED' });
+        await updateOrderStatus({ 
+          status: 'PAYED',
+          confirmation_code: verificationCode 
+        });
       }
       
       setTimeout(() => {
@@ -140,6 +162,12 @@ export default function Payment({
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-600">ID de orden</span>
                   <span className="text-gray-900 font-mono">#{order.id}</span>
+                </div>
+              )}
+              {order?.confirmation_code && (
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-600">Código de verificación</span>
+                  <span className="text-gray-900 font-mono font-bold text-lg">#{order.confirmation_code}</span>
                 </div>
               )}
               <div className="flex justify-between items-center mb-2">

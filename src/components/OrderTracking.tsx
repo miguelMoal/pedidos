@@ -4,6 +4,7 @@ import { Button } from './ui/button';
 import { MapPin, Clock, CheckCircle2, Package, Truck, Phone, MessageCircle, Navigation, User, Store } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { useOrderStore } from '../store/ordersStore';
 
 type OrderTrackingProps = {
   orderStatus: OrderStatus;
@@ -22,6 +23,9 @@ export default function OrderTracking({
   const [deliveryProgress, setDeliveryProgress] = useState(0);
   const [driverPosition, setDriverPosition] = useState({ x: 20, y: 70 });
   const [eta, setEta] = useState(18);
+  
+  // Store de órdenes para obtener el código de verificación
+  const { order } = useOrderStore();
 
   // Auto-progression of order status
   useEffect(() => {
@@ -363,9 +367,16 @@ export default function OrderTracking({
                       <CheckCircle2 className="w-8 h-8 text-white" />
                     </div>
                     <h2 className="text-gray-900 mb-2">¡Pedido confirmado!</h2>
-                    <p className="text-gray-600 text-sm">
+                    <p className="text-gray-600 text-sm mb-4">
                       Empezaremos a preparar tu orden pronto
                     </p>
+                    {order?.confirmation_code && (
+                      <div className="bg-gray-50 rounded-xl p-4 mx-4">
+                        <p className="text-sm text-gray-600 mb-1">Código de verificación</p>
+                        <p className="text-2xl font-mono font-bold text-gray-900">#{order.confirmation_code}</p>
+                        <p className="text-xs text-gray-500 mt-1">Guarda este código para tu referencia</p>
+                      </div>
+                    )}
                   </motion.div>
                 ) : orderStatus === 'PREPARANDO' ? (
                   /* PREPARANDO State */

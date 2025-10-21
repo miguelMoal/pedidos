@@ -115,7 +115,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const item = orderItems.find(item => item.id === itemId);
     
     // Verificar si la orden ya está pagada
-    const isPaid = order?.status === 'PAYED' || order?.status === 'READY' || order?.status === 'DELIVERED';
+    const isPaid = order?.status && order.status !== 'INIT';
     if (isPaid) {
       set({ error: 'No se puede modificar una orden ya pagada' });
       return;
@@ -147,7 +147,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const item = orderItems.find(item => item.id === itemId);
     
     // Verificar si la orden ya está pagada
-    const isPaid = order?.status === 'PAYED' || order?.status === 'READY' || order?.status === 'DELIVERED';
+    const isPaid = order?.status && order.status !== 'INIT';
     if (isPaid) {
       set({ error: 'No se puede modificar una orden ya pagada' });
       return;
@@ -181,7 +181,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     }
 
     // Verificar si la orden ya está pagada
-    const isPaid = order?.status === 'PAYED' || order?.status === 'READY' || order?.status === 'DELIVERED';
+    const isPaid = order?.status && order.status !== 'INIT';
     if (isPaid) {
       set({ error: 'No se puede modificar una orden ya pagada' });
       return;

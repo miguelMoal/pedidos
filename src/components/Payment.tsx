@@ -52,8 +52,8 @@ export default function Payment({
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponError, setCouponError] = useState('');
   
-  // Verificar si la orden ya está pagada
-  const isPaid = order?.status === 'PAYED' || order?.status === 'READY' || order?.status === 'DELIVERED';
+  // Verificar si la orden ya está pagada (cualquier estado diferente de INIT)
+  const isPaid = order?.status && order.status !== 'INIT';
 
   // Verificar si la orden ya tiene un cupón aplicado
   useEffect(() => {

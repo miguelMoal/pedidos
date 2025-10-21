@@ -132,7 +132,7 @@ export default function App() {
 
   const updateOrderItem = async (id: string, quantity: number) => {
     // Verificar si la orden ya está pagada
-    const isPaid = order?.status === 'PAYED' || order?.status === 'READY' || order?.status === 'DELIVERED';
+    const isPaid = order?.status && order.status !== 'INIT';
     if (isPaid) {
       console.log('No se puede editar orden pagada');
       return;
@@ -160,7 +160,7 @@ export default function App() {
 
   const addOrderItem = (item: OrderItem) => {
     // Verificar si la orden ya está pagada
-    const isPaid = order?.status === 'PAYED' || order?.status === 'READY' || order?.status === 'DELIVERED';
+    const isPaid = order?.status && order.status !== 'INIT';
     if (isPaid) {
       console.log('No se puede agregar items a orden pagada');
       return;

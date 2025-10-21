@@ -30,8 +30,8 @@ export default function OrderConfirmation({
   // Usar datos de Supabase si están disponibles, sino usar los mock
   const orderItems = supabaseOrderItems.length > 0 ? supabaseOrderItems : mockOrderItems;
   
-  // Verificar si la orden ya está pagada
-  const isPaid = order?.status === 'PAYED' || order?.status === 'READY' || order?.status === 'DELIVERED';
+  // Verificar si la orden ya está pagada (cualquier estado diferente de INIT)
+  const isPaid = order?.status && order.status !== 'INIT';
   return (
     <div className="min-h-screen flex flex-col pb-[320px]">
       {/* Header */}

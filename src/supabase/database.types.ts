@@ -144,7 +144,7 @@ export type Database = {
       orders: {
         Row: {
           confirmation_code: string | null
-          coupon_applied: boolean
+          coupon_applied: number | null
           created_at: string
           id: number
           order_type: Database["public"]["Enums"]["ORDER_TYPE"] | null
@@ -153,7 +153,7 @@ export type Database = {
         }
         Insert: {
           confirmation_code?: string | null
-          coupon_applied?: boolean
+          coupon_applied?: number | null
           created_at?: string
           id?: number
           order_type?: Database["public"]["Enums"]["ORDER_TYPE"] | null
@@ -162,14 +162,22 @@ export type Database = {
         }
         Update: {
           confirmation_code?: string | null
-          coupon_applied?: boolean
+          coupon_applied?: number | null
           created_at?: string
           id?: number
           order_type?: Database["public"]["Enums"]["ORDER_TYPE"] | null
           status?: Database["public"]["Enums"]["STATUS_ORDER"]
           user_phone?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_coupon_applied_fkey"
+            columns: ["coupon_applied"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {

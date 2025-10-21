@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { OrderItem } from '../App';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -55,8 +55,32 @@ export default function Payment({
   // Verificar si la orden ya está pagada
   const isPaid = order?.status === 'PAYED' || order?.status === 'READY' || order?.status === 'DELIVERED';
 
+  // Verificar si la orden ya tiene un cupón aplicado
+  useEffect(() => {
+    if (order?.coupon_applied) {
+      console.log('La orden ya tiene un cupón aplicado:', order.coupon_applied);
+      setCouponApplied(true);
+      // Si ya hay un cupón aplicado, mostrar un descuento por defecto
+      // TODO: En el futuro, obtener el descuento real de la base de datos
+      // Por ahora usamos un descuento del 10% del total como ejemplo
+      const defaultDiscount = Math.round(total * 0.1 * 100) / 100; // 10% del total
+      setCouponDiscount(defaultDiscount);
+      setCouponCode('CUPÓN APLICADO'); // Mostrar que ya hay un cupón
+    }
+  }, [order?.coupon_applied, total]);
+
   // Función para aplicar cupón
   const handleApplyCoupon = async () => {
+    // Verificar si ya hay un cupón aplicado
+    if (couponApplied || order?.coupon_applied) {
+      setCouponError('Ya tienes un cupón aplicado');
+      toast.error('Cupón no aplicable', {
+        description: 'Ya tienes un cupón aplicado en esta orden',
+        duration: 3000
+      });
+      return;
+    }
+
     if (!couponCode.trim()) {
       setCouponError('Ingresa un código de cupón');
       return;
@@ -100,6 +124,15 @@ export default function Payment({
 
   // Función para remover cupón
   const handleRemoveCoupon = async () => {
+    // Si la orden ya tiene cupon_applied = true desde la base de datos, no permitir remover
+    if (order?.coupon_applied) {
+      toast.error('No se puede remover', {
+        description: 'Este cupón ya está aplicado en la orden y no se puede remover',
+        duration: 3000
+      });
+      return;
+    }
+
     setCouponApplied(false);
     setCouponDiscount(0);
     setCouponCode('');
@@ -384,13 +417,13 @@ export default function Payment({
             <div className="flex gap-2">
               <Input
                 type="text"
-                placeholder="Ingresa tu código de cupón"
+                placeholder={order?.coupon_applied ? "Cupón ya aplicado" : "Ingresa tu código de cupón"}
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value)}
-                disabled={couponApplied}
+                disabled={couponApplied || order?.coupon_applied}
                 className="flex-1"
               />
-              {!couponApplied ? (
+              {!couponApplied && !order?.coupon_applied ? (
                 <Button
                   type="button"
                   onClick={handleApplyCoupon}
@@ -405,22 +438,28 @@ export default function Payment({
                   onClick={handleRemoveCoupon}
                   variant="outline"
                   className="px-4 text-red-600 hover:text-red-700"
+                  disabled={order?.coupon_applied}
                 >
-                  Quitar
+                  {order?.coupon_applied ? "No se puede quitar" : "Quitar"}
                 </Button>
               )}
             </div>
             {couponError && (
               <p className="text-red-500 text-sm">{couponError}</p>
             )}
-            {couponApplied && (
+            {(couponApplied || order?.coupon_applied) && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                 <p className="text-green-800 text-sm font-medium">
-                  ✓ Cupón aplicado: {couponCode}
+                  ✓ Cupón aplicado: {order?.coupon_applied ? "Cupón previamente aplicado" : couponCode}
                 </p>
                 <p className="text-green-700 text-sm">
                   Descuento: -${couponDiscount.toFixed(2)}
                 </p>
+                {order?.coupon_applied && (
+                  <p className="text-green-600 text-xs mt-1">
+                    Este cupón ya estaba aplicado en la orden
+                  </p>
+                )}
               </div>
             )}
           </div>

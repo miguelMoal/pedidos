@@ -136,6 +136,12 @@ export default function Payment({
             </p>
             
             <div className="bg-gray-50 rounded-xl p-4 mb-6">
+              {order && (
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-600">ID de orden</span>
+                  <span className="text-gray-900 font-mono">#{order.id}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center mb-2">
                 <span className="text-gray-600">Total pagado</span>
                 <span className="text-lg font-semibold text-gray-900">${total.toFixed(2)}</span>
@@ -178,6 +184,12 @@ export default function Payment({
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
           <h2 className="text-gray-900 mb-3">Resumen del pedido</h2>
           <div className="space-y-2">
+            {order && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">ID de orden</span>
+                <span className="text-gray-900 font-mono">#{order.id}</span>
+              </div>
+            )}
             {orderItems.slice(0, 3).map((item) => (
               <div key={item.id} className="flex justify-between text-sm">
                 <span className="text-gray-600">

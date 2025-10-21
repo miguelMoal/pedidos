@@ -9,6 +9,7 @@ type OrderSummaryFooterProps = {
   secondaryCtaText?: string;
   onSecondaryCta?: () => void;
   microcopy?: string;
+  orderId?: number;
 };
 
 export default function OrderSummaryFooter({
@@ -19,13 +20,20 @@ export default function OrderSummaryFooter({
   onCta,
   secondaryCtaText,
   onSecondaryCta,
-  microcopy
+  microcopy,
+  orderId
 }: OrderSummaryFooterProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-area-inset-bottom">
       <div className="max-w-2xl mx-auto px-4 py-4">
         {/* Summary */}
         <div className="space-y-2 mb-4">
+          {orderId && (
+            <div className="flex justify-between text-gray-600">
+              <span>ID de orden</span>
+              <span className="font-mono text-sm">#{orderId}</span>
+            </div>
+          )}
           <div className="flex justify-between text-gray-600">
             <span>Subtotal</span>
             <span>${subtotal.toFixed(2)}</span>

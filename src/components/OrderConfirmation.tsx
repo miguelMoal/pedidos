@@ -115,6 +115,12 @@ export default function OrderConfirmation({
         <div className="max-w-2xl mx-auto px-4 py-4">
           {/* Summary */}
           <div className="space-y-2 mb-4">
+            {order && (
+              <div className="flex justify-between text-gray-600">
+                <span>ID de orden</span>
+                <span className="font-mono text-sm">#{order.id}</span>
+              </div>
+            )}
             <div className="flex justify-between text-gray-600">
               <span>Subtotal</span>
               <span>${subtotal.toFixed(2)}</span>

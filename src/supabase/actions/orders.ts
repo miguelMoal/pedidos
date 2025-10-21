@@ -86,6 +86,9 @@ export const getOrderWithItems = async (orderId: number) => {
 // Actualizar una orden
 export const updateOrder = async (orderId: number, orderData: OrderUpdate): Promise<Order> => {
   try {
+    console.log('updateOrder - ID:', orderId);
+    console.log('updateOrder - Datos a actualizar:', orderData);
+    
     const { data, error } = await supabase
       .from('orders')
       .update(orderData)
@@ -98,6 +101,7 @@ export const updateOrder = async (orderId: number, orderData: OrderUpdate): Prom
       throw error;
     }
 
+    console.log('updateOrder - Orden actualizada:', data);
     return data;
   } catch (error) {
     console.error('Error en updateOrder:', error);

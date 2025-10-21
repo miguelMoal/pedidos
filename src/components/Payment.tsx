@@ -98,7 +98,13 @@ export default function Payment({
 
   // Calcular total con descuento
   const calculateTotalWithDiscount = () => {
-    return Math.max(0, total - couponDiscount);
+    const result = Math.max(0, total - couponDiscount);
+    console.log('Calculando total con descuento:', {
+      total,
+      couponDiscount,
+      result
+    });
+    return result;
   };
 
   const handleCardPayment = async (e: React.FormEvent) => {
@@ -111,15 +117,33 @@ export default function Payment({
       const verificationCode = generateVerificationCode();
       // Actualizar estado de la orden a PAGADO en Supabase con código de verificación
       if (order) {
-        await updateOrderStatus({ 
-          status: 'PAYED',
-          confirmation_code: verificationCode,
-          coupon_applied: couponApplied,
-          coupon_code: couponApplied ? couponCode : null
+        console.log('Payment - Datos del cupón:', {
+          couponApplied,
+          couponCode,
+          couponDiscount
         });
         
+        console.log('Payment - Llamando a updateOrderStatus...');
+        const updateData = { 
+          status: 'PAYED',
+          confirmation_code: verificationCode,
+          coupon_applied: couponApplied
+        };
+        console.log('Payment - Datos a enviar a updateOrderStatus:', updateData);
+        
+        try {
+          await updateOrderStatus(updateData);
+          console.log('Payment - updateOrderStatus completado exitosamente');
+        } catch (error) {
+          console.error('Payment - Error en updateOrderStatus:', error);
+        }
+        
         // Recargar la orden para obtener el código actualizado
+        console.log('Payment - Recargando orden...');
         await loadOrderWithItems(order.id);
+        console.log('Payment - Orden recargada');
+      } else {
+        console.log('Payment - No hay orden para actualizar');
       }
       
       // Simulate payment processing
@@ -149,15 +173,33 @@ export default function Payment({
       
       // Actualizar estado de la orden a PAGADO en Supabase con código de verificación
       if (order) {
-        await updateOrderStatus({ 
-          status: 'PAYED',
-          confirmation_code: verificationCode,
-          coupon_applied: couponApplied,
-          coupon_code: couponApplied ? couponCode : null
+        console.log('Payment - Datos del cupón (transfer):', {
+          couponApplied,
+          couponCode,
+          couponDiscount
         });
         
+        console.log('Payment - Llamando a updateOrderStatus (transfer)...');
+        const updateData = { 
+          status: 'PAYED',
+          confirmation_code: verificationCode,
+          coupon_applied: couponApplied
+        };
+        console.log('Payment - Datos a enviar a updateOrderStatus (transfer):', updateData);
+        
+        try {
+          await updateOrderStatus(updateData);
+          console.log('Payment - updateOrderStatus completado exitosamente (transfer)');
+        } catch (error) {
+          console.error('Payment - Error en updateOrderStatus (transfer):', error);
+        }
+        
         // Recargar la orden para obtener el código actualizado
+        console.log('Payment - Recargando orden (transfer)...');
         await loadOrderWithItems(order.id);
+        console.log('Payment - Orden recargada (transfer)');
+      } else {
+        console.log('Payment - No hay orden para actualizar (transfer)');
       }
       
       setTimeout(() => {

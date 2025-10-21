@@ -44,12 +44,18 @@ export const validateCoupon = async (code: string) => {
       return { valid: false, discount: 0, error: 'Cupón agotado' };
     }
 
-    console.log('Cupón válido, descuento:', data.discount_amount);
+    console.log('Cupón válido, descuento:', data.discount);
     console.log('Campos del cupón:', Object.keys(data));
+    console.log('Tipo de descuento:', typeof data.discount);
+    console.log('Valor exacto del descuento:', data.discount);
+
+    // Asegurar que el descuento sea un número
+    const discountAmount = parseFloat(data.discount) || 0;
+    console.log('Descuento parseado:', discountAmount);
 
     return {
       valid: true,
-      discount: data.discount_amount || 0,
+      discount: discountAmount,
       coupon: data
     };
   } catch (error) {

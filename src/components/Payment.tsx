@@ -453,15 +453,18 @@ export default function Payment({
                   Aplicar
                 </Button>
               ) : (
-                <Button
-                  type="button"
-                  onClick={handleRemoveCoupon}
-                  variant="outline"
-                  className="px-4 text-red-600 hover:text-red-700"
-                  disabled={order?.coupon_applied && typeof order.coupon_applied === 'number'}
-                >
-                  {(order?.coupon_applied && typeof order.coupon_applied === 'number') ? "No se puede quitar" : "Quitar"}
-                </Button>
+                // Solo mostrar botón "Quitar" si el cupón se aplicó en la sesión actual
+                // No mostrar botón si el cupón ya estaba aplicado desde la base de datos
+                !(order?.coupon_applied && typeof order.coupon_applied === 'number') && (
+                  <Button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    variant="outline"
+                    className="px-4 text-red-600 hover:text-red-700"
+                  >
+                    Quitar
+                  </Button>
+                )
               )}
             </div>
             {couponError && (

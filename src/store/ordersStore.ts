@@ -32,7 +32,7 @@ interface OrderState {
   updateItemQuantityInOrder: (itemId: string, quantity: number) => Promise<void>;
   removeItemFromOrder: (itemId: string) => Promise<void>;
   addProductToOrder: (productId: string, quantity?: number) => Promise<void>;
-  updateCouponAppliedStatus: (couponApplied: boolean) => Promise<void>;
+  updateCouponAppliedStatus: (couponId: number | null) => Promise<void>;
   
   // Utilidades
   clearOrder: () => void;
@@ -199,7 +199,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     }
   },
 
-  updateCouponAppliedStatus: async (couponApplied: boolean) => {
+  updateCouponAppliedStatus: async (couponId: number | null) => {
     const { order } = get();
     
     if (!order) {
@@ -209,7 +209,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
     set({ loading: true, error: null });
     try {
-      const updatedOrder = await updateCouponApplied(order.id, couponApplied);
+      const updatedOrder = await updateCouponApplied(order.id, couponId);
       set({ order: updatedOrder, loading: false });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error al actualizar estado de cupón';

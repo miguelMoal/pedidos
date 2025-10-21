@@ -249,14 +249,14 @@ export const addProductToOrder = async (orderId: number, productId: number, quan
 };
 
 // Actualizar el estado de cupón aplicado en la orden
-export const updateCouponApplied = async (orderId: number, couponApplied: boolean): Promise<Order> => {
+export const updateCouponApplied = async (orderId: number, couponId: number | null): Promise<Order> => {
   try {
     console.log('updateCouponApplied - ID:', orderId);
-    console.log('updateCouponApplied - Cupón aplicado:', couponApplied);
+    console.log('updateCouponApplied - ID del cupón:', couponId);
     
     const { data, error } = await supabase
       .from('orders')
-      .update({ coupon_applied: couponApplied })
+      .update({ coupon_applied: couponId })
       .eq('id', orderId)
       .select()
       .single();

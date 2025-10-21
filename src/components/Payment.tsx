@@ -17,7 +17,7 @@ const generateVerificationCode = (): string => {
   return result;
 };
 
-import { validateCoupon as validateCouponSupabase, getAllCoupons } from '../supabase/actions/coupons';
+import { validateCoupon as validateCouponSupabase, getAllCoupons, getCouponById } from '../supabase/actions/coupons';
 
 type PaymentProps = {
   orderItems: OrderItem[];
@@ -57,22 +57,42 @@ export default function Payment({
 
   // Verificar si la orden ya tiene un cupón aplicado
   useEffect(() => {
-    if (order?.coupon_applied) {
-      console.log('La orden ya tiene un cupón aplicado:', order.coupon_applied);
-      setCouponApplied(true);
-      // Si ya hay un cupón aplicado, mostrar un descuento por defecto
-      // TODO: En el futuro, obtener el descuento real de la base de datos
-      // Por ahora usamos un descuento del 10% del total como ejemplo
-      const defaultDiscount = Math.round(total * 0.1 * 100) / 100; // 10% del total
-      setCouponDiscount(defaultDiscount);
-      setCouponCode('CUPÓN APLICADO'); // Mostrar que ya hay un cupón
-    }
-  }, [order?.coupon_applied, total]);
+    const loadExistingCoupon = async () => {
+      if (order?.coupon_applied && typeof order.coupon_applied === 'number') {
+        console.log('La orden ya tiene un cupón aplicado con ID:', order.coupon_applied);
+        setCouponApplied(true);
+        
+        // Obtener los datos del cupón por su ID
+        try {
+          const coupon = await getCouponById(order.coupon_applied);
+          if (coupon) {
+            setCouponDiscount(coupon.discount);
+            setCouponCode(coupon.code);
+            console.log('Cupón obtenido:', coupon);
+          } else {
+            // Si no se puede obtener el cupón, usar valores por defecto
+            const defaultDiscount = 5; // $5 por defecto
+            setCouponDiscount(defaultDiscount);
+            setCouponCode('CUPÓN APLICADO');
+            console.log('No se pudo obtener el cupón, usando valores por defecto');
+          }
+        } catch (error) {
+          console.error('Error al obtener cupón por ID:', error);
+          // Usar valores por defecto en caso de error
+          const defaultDiscount = 5; // $5 por defecto
+          setCouponDiscount(defaultDiscount);
+          setCouponCode('CUPÓN APLICADO');
+        }
+      }
+    };
+
+    loadExistingCoupon();
+  }, [order?.coupon_applied]);
 
   // Función para aplicar cupón
   const handleApplyCoupon = async () => {
     // Verificar si ya hay un cupón aplicado
-    if (couponApplied || order?.coupon_applied) {
+    if (couponApplied || (order?.coupon_applied && typeof order.coupon_applied === 'number')) {
       setCouponError('Ya tienes un cupón aplicado');
       toast.error('Cupón no aplicable', {
         description: 'Ya tienes un cupón aplicado en esta orden',
@@ -95,14 +115,14 @@ export default function Payment({
     const result = await validateCouponSupabase(couponCode.trim());
     console.log('Resultado de validación:', result);
     
-    if (result.valid && result.discount !== undefined) {
+    if (result.valid && result.discount !== undefined && result.coupon) {
       setCouponApplied(true);
       setCouponDiscount(result.discount);
       
-      // Actualizar el campo cupon_applied en la base de datos
+      // Actualizar el campo cupon_applied con el ID del cupón en la base de datos
       try {
-        await updateCouponAppliedStatus(true);
-        console.log('Campo cupon_applied actualizado a true en la base de datos');
+        await updateCouponAppliedStatus(result.coupon.id);
+        console.log('Campo cupon_applied actualizado con ID del cupón:', result.coupon.id);
       } catch (error) {
         console.error('Error al actualizar cupon_applied:', error);
         // No mostrar error al usuario ya que el cupón se aplicó correctamente
@@ -124,8 +144,8 @@ export default function Payment({
 
   // Función para remover cupón
   const handleRemoveCoupon = async () => {
-    // Si la orden ya tiene cupon_applied = true desde la base de datos, no permitir remover
-    if (order?.coupon_applied) {
+    // Si la orden ya tiene cupon_applied como ID desde la base de datos, no permitir remover
+    if (order?.coupon_applied && typeof order.coupon_applied === 'number') {
       toast.error('No se puede remover', {
         description: 'Este cupón ya está aplicado en la orden y no se puede remover',
         duration: 3000
@@ -138,10 +158,10 @@ export default function Payment({
     setCouponCode('');
     setCouponError('');
     
-    // Actualizar el campo cupon_applied en la base de datos
+    // Actualizar el campo cupon_applied a null en la base de datos
     try {
-      await updateCouponAppliedStatus(false);
-      console.log('Campo cupon_applied actualizado a false en la base de datos');
+      await updateCouponAppliedStatus(null);
+      console.log('Campo cupon_applied actualizado a null en la base de datos');
     } catch (error) {
       console.error('Error al actualizar cupon_applied:', error);
       // No mostrar error al usuario ya que el cupón se removió correctamente
@@ -417,13 +437,13 @@ export default function Payment({
             <div className="flex gap-2">
               <Input
                 type="text"
-                placeholder={order?.coupon_applied ? "Cupón ya aplicado" : "Ingresa tu código de cupón"}
+                placeholder={(order?.coupon_applied && typeof order.coupon_applied === 'number') ? "Cupón ya aplicado" : "Ingresa tu código de cupón"}
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value)}
-                disabled={couponApplied || order?.coupon_applied}
+                disabled={couponApplied || (order?.coupon_applied && typeof order.coupon_applied === 'number')}
                 className="flex-1"
               />
-              {!couponApplied && !order?.coupon_applied ? (
+              {!couponApplied && !(order?.coupon_applied && typeof order.coupon_applied === 'number') ? (
                 <Button
                   type="button"
                   onClick={handleApplyCoupon}
@@ -438,24 +458,24 @@ export default function Payment({
                   onClick={handleRemoveCoupon}
                   variant="outline"
                   className="px-4 text-red-600 hover:text-red-700"
-                  disabled={order?.coupon_applied}
+                  disabled={order?.coupon_applied && typeof order.coupon_applied === 'number'}
                 >
-                  {order?.coupon_applied ? "No se puede quitar" : "Quitar"}
+                  {(order?.coupon_applied && typeof order.coupon_applied === 'number') ? "No se puede quitar" : "Quitar"}
                 </Button>
               )}
             </div>
             {couponError && (
               <p className="text-red-500 text-sm">{couponError}</p>
             )}
-            {(couponApplied || order?.coupon_applied) && (
+            {(couponApplied || (order?.coupon_applied && typeof order.coupon_applied === 'number')) && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                 <p className="text-green-800 text-sm font-medium">
-                  ✓ Cupón aplicado: {order?.coupon_applied ? "Cupón previamente aplicado" : couponCode}
+                  ✓ Cupón aplicado: {(order?.coupon_applied && typeof order.coupon_applied === 'number') ? "Cupón previamente aplicado" : couponCode}
                 </p>
                 <p className="text-green-700 text-sm">
                   Descuento: -${couponDiscount.toFixed(2)}
                 </p>
-                {order?.coupon_applied && (
+                {(order?.coupon_applied && typeof order.coupon_applied === 'number') && (
                   <p className="text-green-600 text-xs mt-1">
                     Este cupón ya estaba aplicado en la orden
                   </p>

@@ -102,3 +102,25 @@ export const incrementCouponUsage = async (code: string) => {
     throw error;
   }
 };
+
+// Obtener un cupón por su ID
+export const getCouponById = async (couponId: number) => {
+  try {
+    const { data, error } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('id', couponId)
+      .eq('is_active', true)
+      .single();
+
+    if (error) {
+      console.error('Error al obtener cupón por ID:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error en getCouponById:', error);
+    return null;
+  }
+};

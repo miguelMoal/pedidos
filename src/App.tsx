@@ -204,33 +204,11 @@ export default function App() {
   const handleStatusUpdate = useCallback(async (status: OrderStatus) => {
     setOrderStatus(status);
     
-    // Mapear el estado local al estado de Supabase
-    let supabaseStatus: 'INIT' | 'PAYED' | 'IN_PROGRESS' | 'READY' | 'DELIVERED';
-    switch (status) {
-      case 'CREADO':
-      case 'EDITANDO':
-      case 'PENDIENTE_PAGO':
-        supabaseStatus = 'INIT';
-        break;
-      case 'PAGADO':
-        supabaseStatus = 'PAYED';
-        break;
-      case 'PREPARANDO':
-        supabaseStatus = 'IN_PROGRESS';
-        break;
-      case 'EN_CAMINO':
-        supabaseStatus = 'READY';
-        break;
-      case 'ENTREGADO':
-        supabaseStatus = 'DELIVERED';
-        break;
-      default:
-        supabaseStatus = 'INIT';
-    }
-    
-    // Actualizar en Supabase
-    if (order) {
-      await updateOrderStatus({ status: supabaseStatus });
+    // Solo actualizar Supabase para cambios manuales, no para la progresión automática
+    // Los estados automáticos (PREPARANDO, EN_CAMINO, ENTREGADO) solo se muestran en la UI
+    if (status === 'PAGADO' && order) {
+      // Solo actualizar Supabase cuando se paga
+      await updateOrderStatus({ status: 'PAYED' });
     }
   }, [order, updateOrderStatus]);
 

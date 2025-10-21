@@ -148,6 +148,7 @@ export type Database = {
           created_at: string
           id: number
           order_type: Database["public"]["Enums"]["ORDER_TYPE"] | null
+          price: number | null
           status: Database["public"]["Enums"]["STATUS_ORDER"]
           user_phone: string
         }
@@ -157,6 +158,7 @@ export type Database = {
           created_at?: string
           id?: number
           order_type?: Database["public"]["Enums"]["ORDER_TYPE"] | null
+          price?: number | null
           status?: Database["public"]["Enums"]["STATUS_ORDER"]
           user_phone: string
         }
@@ -166,6 +168,7 @@ export type Database = {
           created_at?: string
           id?: number
           order_type?: Database["public"]["Enums"]["ORDER_TYPE"] | null
+          price?: number | null
           status?: Database["public"]["Enums"]["STATUS_ORDER"]
           user_phone?: string
         }
@@ -175,6 +178,13 @@ export type Database = {
             columns: ["coupon_applied"]
             isOneToOne: false
             referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_price_fkey"
+            columns: ["price"]
+            isOneToOne: false
+            referencedRelation: "send_price"
             referencedColumns: ["id"]
           },
         ]
@@ -203,6 +213,24 @@ export type Database = {
           image_url?: string
           name?: string
           price?: number
+        }
+        Relationships: []
+      }
+      send_price: {
+        Row: {
+          created_at: string
+          id: number
+          price: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          price?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          price?: number | null
         }
         Relationships: []
       }
@@ -237,7 +265,13 @@ export type Database = {
     Enums: {
       BUSINESS_TYPE: "JAGUARES" | "PUESTO"
       ORDER_TYPE: "GUBERNAMENTAL" | "CASETA"
-      STATUS_ORDER: "INIT" | "IN_PROGRESS" | "READY" | "DELIVERED" | "PAYED"
+      STATUS_ORDER:
+        | "INIT"
+        | "IN_PROGRESS"
+        | "READY"
+        | "DELIVERED"
+        | "PAYED"
+        | "BOT_READY"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -367,7 +401,14 @@ export const Constants = {
     Enums: {
       BUSINESS_TYPE: ["JAGUARES", "PUESTO"],
       ORDER_TYPE: ["GUBERNAMENTAL", "CASETA"],
-      STATUS_ORDER: ["INIT", "IN_PROGRESS", "READY", "DELIVERED", "PAYED"],
+      STATUS_ORDER: [
+        "INIT",
+        "IN_PROGRESS",
+        "READY",
+        "DELIVERED",
+        "PAYED",
+        "BOT_READY",
+      ],
     },
   },
 } as const

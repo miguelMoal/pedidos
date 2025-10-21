@@ -6,6 +6,26 @@ export type Order = Tables<'orders'>;
 export type OrderInsert = TablesInsert<'orders'>;
 export type OrderUpdate = TablesUpdate<'orders'>;
 
+// Tipo extendido para orden con relaciones
+export type OrderWithRelations = Order & {
+  send_price?: {
+    id: number;
+    price: number | null;
+  } | null;
+  item_order?: Array<{
+    id: number;
+    product_id: number;
+    quantity: number;
+    products: {
+      id: number;
+      name: string;
+      price: number;
+      image_url: string;
+      business: string;
+    };
+  }>;
+};
+
 // Obtener órdenes por teléfono de usuario
 export const getOrdersByUserPhone = async (userPhone: string): Promise<Order[]> => {
   try {
@@ -49,7 +69,7 @@ export const getOrderById = async (orderId: number): Promise<Order | null> => {
 };
 
 // Obtener una orden con sus productos relacionados
-export const getOrderWithItems = async (orderId: number) => {
+export const getOrderWithItems = async (orderId: number): Promise<OrderWithRelations> => {
   try {
     const { data, error } = await supabase
       .from('orders')
@@ -66,6 +86,10 @@ export const getOrderWithItems = async (orderId: number) => {
             image_url,
             business
           )
+        ),
+        send_price (
+          id,
+          price
         )
       `)
       .eq('id', orderId)

@@ -30,6 +30,12 @@ export default function OrderConfirmation({
   // Usar datos de Supabase si están disponibles, sino usar los mock
   const orderItems = supabaseOrderItems.length > 0 ? supabaseOrderItems : mockOrderItems;
   
+  // Obtener el precio de envío de Supabase
+  const shippingCostFromDB = order?.send_price?.price || 0;
+  
+  // Usar el precio de envío de Supabase si está disponible, sino usar el prop
+  const finalShippingCost = shippingCostFromDB > 0 ? shippingCostFromDB : shippingCost;
+  
   // Verificar si la orden ya está pagada (cualquier estado diferente de INIT)
   const isPaid = order?.status && order.status !== 'INIT';
   return (
@@ -127,12 +133,12 @@ export default function OrderConfirmation({
             </div>
             <div className="flex justify-between text-gray-600">
               <span>Envío</span>
-              <span>${shippingCost.toFixed(2)}</span>
+              <span>${finalShippingCost.toFixed(2)}</span>
             </div>
             <div className="h-px bg-gray-200 my-2" />
             <div className="flex justify-between text-gray-900">
               <span>Total</span>
-              <span>${total.toFixed(2)}</span>
+              <span>${(subtotal + finalShippingCost).toFixed(2)}</span>
             </div>
           </div>
 

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Order, OrderUpdate } from '../supabase/actions/orders';
+import { Order, OrderUpdate, OrderWithRelations } from '../supabase/actions/orders';
 import { getOrderById, getOrderWithItems, updateOrder, updateItemQuantity, removeItemFromOrder, addProductToOrder, updateCouponApplied } from '../supabase/actions/orders';
 
 // Tipo para los productos de la orden
@@ -14,13 +14,13 @@ export type OrderItem = {
 
 interface OrderState {
   // Estado
-  order: Order | null;
+  order: OrderWithRelations | null;
   orderItems: OrderItem[];
   loading: boolean;
   error: string | null;
   
   // Acciones
-  setOrder: (order: Order | null) => void;
+  setOrder: (order: OrderWithRelations | null) => void;
   setOrderItems: (items: OrderItem[]) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;

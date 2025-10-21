@@ -26,6 +26,10 @@ export default function OrderTracking({
   
   // Store de órdenes para obtener el código de verificación
   const { order } = useOrderStore();
+  
+  // Debug: mostrar información de la orden
+  console.log('OrderTracking - order:', order);
+  console.log('OrderTracking - confirmation_code:', order?.confirmation_code);
 
   // Auto-progression of order status
   useEffect(() => {
@@ -112,12 +116,27 @@ export default function OrderTracking({
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F9FA]">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-2xl mx-auto px-4 py-4">
-          <h1 className="text-gray-900">Estado del pedido</h1>
-        </div>
-      </div>
+       {/* Header */}
+       <div className="bg-white border-b border-gray-200">
+         <div className="max-w-2xl mx-auto px-4 py-4">
+           <h1 className="text-gray-900 mb-3">Estado del pedido</h1>
+           {/* Información del pedido */}
+           <div className="space-y-2">
+             {order && (
+               <div className="flex justify-between items-center text-sm">
+                 <span className="text-gray-600">ID de orden</span>
+                 <span className="text-gray-900 font-mono">#{order.id}</span>
+               </div>
+             )}
+             {order?.confirmation_code && (
+               <div className="flex justify-between items-center text-sm">
+                 <span className="text-gray-600">Código de verificación</span>
+                 <span className="text-gray-900 font-mono font-bold">#{order.confirmation_code}</span>
+               </div>
+             )}
+           </div>
+         </div>
+       </div>
 
       {/* Status Steps - Clickeable */}
       <div className="bg-white border-b border-gray-100 px-4 py-4">

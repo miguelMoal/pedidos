@@ -36,7 +36,7 @@ export default function Payment({
   const [isProcessing, setIsProcessing] = useState(false);
   
   // Store de órdenes
-  const { order, updateOrderStatus } = useOrderStore();
+  const { order, updateOrderStatus, loadOrderWithItems } = useOrderStore();
   
   // Card fields
   const [cardNumber, setCardNumber] = useState('');
@@ -55,13 +55,22 @@ export default function Payment({
     try {
       // Generar código de verificación
       const verificationCode = generateVerificationCode();
+      console.log('Payment - Código generado:', verificationCode);
       
       // Actualizar estado de la orden a PAGADO en Supabase con código de verificación
       if (order) {
+        console.log('Payment - Actualizando orden:', order.id, 'con código:', verificationCode);
         await updateOrderStatus({ 
           status: 'PAYED',
           confirmation_code: verificationCode 
         });
+        console.log('Payment - Orden actualizada exitosamente');
+        
+        // Recargar la orden para obtener el código actualizado
+        console.log('Payment - Recargando orden para obtener código actualizado');
+        await loadOrderWithItems(order.id);
+      } else {
+        console.log('Payment - No hay orden para actualizar');
       }
       
       // Simulate payment processing
@@ -91,10 +100,18 @@ export default function Payment({
       
       // Actualizar estado de la orden a PAGADO en Supabase con código de verificación
       if (order) {
+        console.log('Payment - Actualizando orden (transfer):', order.id, 'con código:', verificationCode);
         await updateOrderStatus({ 
           status: 'PAYED',
           confirmation_code: verificationCode 
         });
+        console.log('Payment - Orden actualizada exitosamente (transfer)');
+        
+        // Recargar la orden para obtener el código actualizado
+        console.log('Payment - Recargando orden para obtener código actualizado (transfer)');
+        await loadOrderWithItems(order.id);
+      } else {
+        console.log('Payment - No hay orden para actualizar (transfer)');
       }
       
       setTimeout(() => {

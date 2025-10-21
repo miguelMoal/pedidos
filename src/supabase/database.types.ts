@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      coupons: {
+        Row: {
+          code: string
+          created_at: string
+          id: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
       item_booth: {
         Row: {
           car_model: string | null
@@ -120,6 +138,7 @@ export type Database = {
       orders: {
         Row: {
           confirmation_code: string | null
+          coupon_applied: boolean
           created_at: string
           id: number
           order_type: Database["public"]["Enums"]["ORDER_TYPE"] | null
@@ -128,6 +147,7 @@ export type Database = {
         }
         Insert: {
           confirmation_code?: string | null
+          coupon_applied?: boolean
           created_at?: string
           id?: number
           order_type?: Database["public"]["Enums"]["ORDER_TYPE"] | null
@@ -136,6 +156,7 @@ export type Database = {
         }
         Update: {
           confirmation_code?: string | null
+          coupon_applied?: boolean
           created_at?: string
           id?: number
           order_type?: Database["public"]["Enums"]["ORDER_TYPE"] | null

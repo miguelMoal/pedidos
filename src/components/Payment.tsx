@@ -54,6 +54,10 @@ export default function Payment({
   
   // Verificar si la orden ya está pagada (cualquier estado diferente de INIT)
   const isPaid = order?.status && order.status !== 'INIT';
+  
+  // Obtener el precio de envío desde Supabase
+  const shippingCostFromDB = order?.send_price?.price || 0;
+  const finalShippingCost = shippingCostFromDB > 0 ? shippingCostFromDB : 0;
 
   // Verificar si la orden ya tiene un cupón aplicado
   useEffect(() => {
@@ -170,9 +174,10 @@ export default function Payment({
 
   // Calcular total con descuento
   const calculateTotalWithDiscount = () => {
-    const result = Math.max(0, total - couponDiscount);
+    const result = Math.max(0, total + finalShippingCost - couponDiscount);
     console.log('Calculando total con descuento:', {
       total,
+      finalShippingCost,
       couponDiscount,
       result
     });
@@ -421,6 +426,10 @@ export default function Payment({
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Subtotal</span>
                 <span className="text-gray-900">${total.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Envío</span>
+                <span className="text-gray-900">${finalShippingCost.toFixed(2)}</span>
               </div>
               {couponApplied && (
                 <div className="flex justify-between text-sm text-green-600">

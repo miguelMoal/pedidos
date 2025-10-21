@@ -347,9 +347,15 @@ export default function Payment({
                   <span className="text-gray-900 font-mono font-bold text-lg">#{order.confirmation_code}</span>
                 </div>
               )}
+              {couponDiscount > 0 && (
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-600">Descuento ({couponCode})</span>
+                  <span className="text-green-600 font-medium">-${couponDiscount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center mb-2">
                 <span className="text-gray-600">Total pagado</span>
-                <span className="text-lg font-semibold text-gray-900">${total.toFixed(2)}</span>
+                <span className="text-lg font-semibold text-gray-900">${calculateTotalWithDiscount().toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-500">Estado</span>

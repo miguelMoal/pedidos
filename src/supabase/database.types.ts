@@ -72,6 +72,7 @@ export type Database = {
       }
       item_gubernamental: {
         Row: {
+          address: string | null
           building: string | null
           created_at: string
           floor: string | null
@@ -79,6 +80,7 @@ export type Database = {
           order_id: number | null
         }
         Insert: {
+          address?: string | null
           building?: string | null
           created_at?: string
           floor?: string | null
@@ -86,6 +88,7 @@ export type Database = {
           order_id?: number | null
         }
         Update: {
+          address?: string | null
           building?: string | null
           created_at?: string
           floor?: string | null

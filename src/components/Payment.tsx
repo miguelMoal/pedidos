@@ -63,6 +63,7 @@ export default function Payment({
   // Gubernamental fields
   const [building, setBuilding] = useState('');
   const [floor, setFloor] = useState('');
+  const [address, setAddress] = useState('');
   
   // Verificar si la orden ya está pagada (cualquier estado diferente de INIT)
   const isPaid = order?.status && order.status !== 'INIT';
@@ -132,6 +133,7 @@ export default function Payment({
             if (gubernamentalData) {
               setBuilding(gubernamentalData.building || '');
               setFloor(gubernamentalData.floor || '');
+              setAddress((gubernamentalData as any).address || '');
               console.log('Datos gubernamentales cargados:', gubernamentalData);
             }
           }
@@ -279,13 +281,14 @@ export default function Payment({
           } catch (error) {
             console.error('Payment - Error al guardar datos de caseta:', error);
           }
-        } else if (deliveryType === 'GUBERNAMENTAL' && (building || floor)) {
+        } else if (deliveryType === 'GUBERNAMENTAL' && (building || floor || address)) {
           try {
             await insertItemGubernamental({
               order_id: order.id,
               building: building || null,
-              floor: floor || null
-            });
+              floor: floor || null,
+              address: address || null
+            } as any);
             console.log('Payment - Datos gubernamentales guardados exitosamente');
           } catch (error) {
             console.error('Payment - Error al guardar datos gubernamentales:', error);
@@ -361,13 +364,14 @@ export default function Payment({
           } catch (error) {
             console.error('Payment - Error al guardar datos de caseta (transfer):', error);
           }
-        } else if (deliveryType === 'GUBERNAMENTAL' && (building || floor)) {
+        } else if (deliveryType === 'GUBERNAMENTAL' && (building || floor || address)) {
           try {
             await insertItemGubernamental({
               order_id: order.id,
               building: building || null,
-              floor: floor || null
-            });
+              floor: floor || null,
+              address: address || null
+            } as any);
             console.log('Payment - Datos gubernamentales guardados exitosamente (transfer)');
           } catch (error) {
             console.error('Payment - Error al guardar datos gubernamentales (transfer):', error);
@@ -707,6 +711,16 @@ export default function Payment({
                       placeholder="Ej: 3er piso, Oficina 301"
                       value={floor}
                       onChange={(e) => setFloor(e.target.value)}
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="address">Dirección</Label>
+                    <Input
+                      id="address"
+                      placeholder="Ej: Av. Principal 123, Col. Centro"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
                       className="mt-1.5"
                     />
                   </div>

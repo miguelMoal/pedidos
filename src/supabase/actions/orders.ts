@@ -359,15 +359,15 @@ export const getItemBoothByOrderId = async (orderId: number) => {
       .from('item_booth')
       .select('*')
       .eq('order_id', orderId)
-      .single();
+      .maybeSingle(); // Usar maybeSingle() en lugar de single()
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+    if (error) {
       console.error('Error al obtener datos de caseta:', error);
       throw error;
     }
 
     console.log('getItemBoothByOrderId - Datos obtenidos:', data);
-    return data;
+    return data; // Retorna null si no hay datos, o el objeto si existe
   } catch (error) {
     console.error('Error en getItemBoothByOrderId:', error);
     throw error;
@@ -383,15 +383,15 @@ export const getItemGubernamentalByOrderId = async (orderId: number) => {
       .from('item_gubernamental')
       .select('*')
       .eq('order_id', orderId)
-      .single();
+      .maybeSingle(); // Usar maybeSingle() en lugar de single()
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+    if (error) {
       console.error('Error al obtener datos gubernamentales:', error);
       throw error;
     }
 
     console.log('getItemGubernamentalByOrderId - Datos obtenidos:', data);
-    return data;
+    return data; // Retorna null si no hay datos, o el objeto si existe
   } catch (error) {
     console.error('Error en getItemGubernamentalByOrderId:', error);
     throw error;

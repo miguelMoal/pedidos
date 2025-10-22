@@ -3,7 +3,7 @@ import { OrderItem } from '../App';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { ArrowLeft, CreditCard, Building2, Lock, CheckCircle2, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CreditCard, Building2, Lock, CheckCircle2, CheckCircle, Car, Building } from 'lucide-react';
 import { toast } from 'sonner';
 import { useOrderStore } from '../store/ordersStore';
 
@@ -619,9 +619,9 @@ export default function Payment({
                     : 'border-gray-200 bg-white'
                 }`}
               >
-                <span className={`text-2xl mb-2 ${
+                <Car className={`w-6 h-6 mb-2 ${
                   deliveryType === 'CASETA' ? 'text-[#046741]' : 'text-gray-400'
-                }`}>🚗</span>
+                }`} />
                 <p className="text-sm text-gray-900">Caseta</p>
                 <p className="text-xs text-gray-500 mt-1">Entrega desde el auto</p>
               </button>
@@ -634,9 +634,9 @@ export default function Payment({
                     : 'border-gray-200 bg-white'
                 }`}
               >
-                <span className={`text-2xl mb-2 ${
+                <Building className={`w-6 h-6 mb-2 ${
                   deliveryType === 'GUBERNAMENTAL' ? 'text-[#046741]' : 'text-gray-400'
-                }`}>🏢</span>
+                }`} />
                 <p className="text-sm text-gray-900">Gubernamental</p>
                 <p className="text-xs text-gray-500 mt-1">Entrega a oficina</p>
               </button>

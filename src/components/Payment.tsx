@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { ArrowLeft, CreditCard, Building2, Lock, CheckCircle2, CheckCircle } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { useOrderStore } from '../store/ordersStore';
 
 // Función para generar código de verificación
@@ -18,6 +18,7 @@ const generateVerificationCode = (): string => {
 };
 
 import { validateCoupon as validateCouponSupabase, getAllCoupons, getCouponById } from '../supabase/actions/coupons';
+import { insertItemBooth, insertItemGubernamental, updateOrder } from '../supabase/actions/orders';
 
 type PaymentProps = {
   orderItems: OrderItem[];
@@ -51,6 +52,17 @@ export default function Payment({
   const [couponApplied, setCouponApplied] = useState(false);
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponError, setCouponError] = useState('');
+  
+  // Delivery type fields
+  const [deliveryType, setDeliveryType] = useState<'CASETA' | 'GUBERNAMENTAL' | null>(null);
+  
+  // Caseta fields
+  const [carModel, setCarModel] = useState('');
+  const [plates, setPlates] = useState('');
+  
+  // Gubernamental fields
+  const [building, setBuilding] = useState('');
+  const [floor, setFloor] = useState('');
   
   // Verificar si la orden ya está pagada (cualquier estado diferente de INIT)
   const isPaid = order?.status && order.status !== 'INIT';
@@ -211,7 +223,8 @@ export default function Payment({
         const updateData = { 
           status: 'PAYED' as const,
           confirmation_code: verificationCode,
-          coupon_applied: couponApplied ? (order.coupon_applied || null) : null
+          coupon_applied: couponApplied ? (order.coupon_applied || null) : null,
+          order_type: deliveryType
         };
         console.log('Payment - Datos a enviar a updateOrderStatus:', updateData);
         
@@ -220,6 +233,31 @@ export default function Payment({
           console.log('Payment - updateOrderStatus completado exitosamente');
         } catch (error) {
           console.error('Payment - Error en updateOrderStatus:', error);
+        }
+        
+        // Guardar datos de entrega según el tipo seleccionado
+        if (deliveryType === 'CASETA' && (carModel || plates)) {
+          try {
+            await insertItemBooth({
+              order_id: order.id,
+              car_model: carModel || null,
+              plates: plates || null
+            });
+            console.log('Payment - Datos de caseta guardados exitosamente');
+          } catch (error) {
+            console.error('Payment - Error al guardar datos de caseta:', error);
+          }
+        } else if (deliveryType === 'GUBERNAMENTAL' && (building || floor)) {
+          try {
+            await insertItemGubernamental({
+              order_id: order.id,
+              building: building || null,
+              floor: floor || null
+            });
+            console.log('Payment - Datos gubernamentales guardados exitosamente');
+          } catch (error) {
+            console.error('Payment - Error al guardar datos gubernamentales:', error);
+          }
         }
         
         // Recargar la orden para obtener el código actualizado
@@ -267,7 +305,8 @@ export default function Payment({
         const updateData = { 
           status: 'PAYED' as const,
           confirmation_code: verificationCode,
-          coupon_applied: couponApplied ? (order.coupon_applied || null) : null
+          coupon_applied: couponApplied ? (order.coupon_applied || null) : null,
+          order_type: deliveryType
         };
         console.log('Payment - Datos a enviar a updateOrderStatus (transfer):', updateData);
         
@@ -276,6 +315,31 @@ export default function Payment({
           console.log('Payment - updateOrderStatus completado exitosamente (transfer)');
         } catch (error) {
           console.error('Payment - Error en updateOrderStatus (transfer):', error);
+        }
+        
+        // Guardar datos de entrega según el tipo seleccionado
+        if (deliveryType === 'CASETA' && (carModel || plates)) {
+          try {
+            await insertItemBooth({
+              order_id: order.id,
+              car_model: carModel || null,
+              plates: plates || null
+            });
+            console.log('Payment - Datos de caseta guardados exitosamente (transfer)');
+          } catch (error) {
+            console.error('Payment - Error al guardar datos de caseta (transfer):', error);
+          }
+        } else if (deliveryType === 'GUBERNAMENTAL' && (building || floor)) {
+          try {
+            await insertItemGubernamental({
+              order_id: order.id,
+              building: building || null,
+              floor: floor || null
+            });
+            console.log('Payment - Datos gubernamentales guardados exitosamente (transfer)');
+          } catch (error) {
+            console.error('Payment - Error al guardar datos gubernamentales (transfer):', error);
+          }
         }
         
         // Recargar la orden para obtener el código actualizado
@@ -505,6 +569,102 @@ export default function Payment({
                     Este cupón ya estaba aplicado en la orden
                   </p>
                 )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Delivery Type Section */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <h3 className="text-gray-900 mb-3">Tipo de entrega</h3>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setDeliveryType('CASETA')}
+                className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center ${
+                  deliveryType === 'CASETA'
+                    ? 'border-[#046741] bg-[#046741]/5'
+                    : 'border-gray-200 bg-white'
+                }`}
+              >
+                <span className={`text-2xl mb-2 ${
+                  deliveryType === 'CASETA' ? 'text-[#046741]' : 'text-gray-400'
+                }`}>🚗</span>
+                <p className="text-sm text-gray-900">Caseta</p>
+                <p className="text-xs text-gray-500 mt-1">Entrega desde el auto</p>
+              </button>
+
+              <button
+                onClick={() => setDeliveryType('GUBERNAMENTAL')}
+                className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center justify-center ${
+                  deliveryType === 'GUBERNAMENTAL'
+                    ? 'border-[#046741] bg-[#046741]/5'
+                    : 'border-gray-200 bg-white'
+                }`}
+              >
+                <span className={`text-2xl mb-2 ${
+                  deliveryType === 'GUBERNAMENTAL' ? 'text-[#046741]' : 'text-gray-400'
+                }`}>🏢</span>
+                <p className="text-sm text-gray-900">Gubernamental</p>
+                <p className="text-xs text-gray-500 mt-1">Entrega a oficina</p>
+              </button>
+            </div>
+
+            {/* Caseta Form */}
+            {deliveryType === 'CASETA' && (
+              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                <h4 className="text-gray-900 font-medium">Datos del vehículo</h4>
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="carModel">Modelo del auto</Label>
+                    <Input
+                      id="carModel"
+                      placeholder="Ej: Toyota Corolla 2020"
+                      value={carModel}
+                      onChange={(e) => setCarModel(e.target.value)}
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="plates">Placas</Label>
+                    <Input
+                      id="plates"
+                      placeholder="Ej: ABC-123"
+                      value={plates}
+                      onChange={(e) => setPlates(e.target.value)}
+                      className="mt-1.5"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Gubernamental Form */}
+            {deliveryType === 'GUBERNAMENTAL' && (
+              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
+                <h4 className="text-gray-900 font-medium">Datos de la oficina</h4>
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="building">Edificio</Label>
+                    <Input
+                      id="building"
+                      placeholder="Ej: Edificio Principal"
+                      value={building}
+                      onChange={(e) => setBuilding(e.target.value)}
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="floor">Piso</Label>
+                    <Input
+                      id="floor"
+                      placeholder="Ej: 3er piso, Oficina 301"
+                      value={floor}
+                      onChange={(e) => setFloor(e.target.value)}
+                      className="mt-1.5"
+                    />
+                  </div>
+                </div>
               </div>
             )}
           </div>

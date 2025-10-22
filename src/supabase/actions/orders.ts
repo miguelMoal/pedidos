@@ -297,3 +297,55 @@ export const updateCouponApplied = async (orderId: number, couponId: number | nu
     throw error;
   }
 };
+
+// Tipos para item_booth e item_gubernamental
+export type ItemBoothInsert = TablesInsert<'item_booth'>;
+export type ItemGubernamentalInsert = TablesInsert<'item_gubernamental'>;
+
+// Insertar datos de caseta
+export const insertItemBooth = async (itemBoothData: ItemBoothInsert) => {
+  try {
+    console.log('insertItemBooth - Datos:', itemBoothData);
+    
+    const { data, error } = await supabase
+      .from('item_booth')
+      .insert(itemBoothData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error al insertar datos de caseta:', error);
+      throw error;
+    }
+
+    console.log('insertItemBooth - Datos insertados:', data);
+    return data;
+  } catch (error) {
+    console.error('Error en insertItemBooth:', error);
+    throw error;
+  }
+};
+
+// Insertar datos gubernamentales
+export const insertItemGubernamental = async (itemGubernamentalData: ItemGubernamentalInsert) => {
+  try {
+    console.log('insertItemGubernamental - Datos:', itemGubernamentalData);
+    
+    const { data, error } = await supabase
+      .from('item_gubernamental')
+      .insert(itemGubernamentalData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error al insertar datos gubernamentales:', error);
+      throw error;
+    }
+
+    console.log('insertItemGubernamental - Datos insertados:', data);
+    return data;
+  } catch (error) {
+    console.error('Error en insertItemGubernamental:', error);
+    throw error;
+  }
+};

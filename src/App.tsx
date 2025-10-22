@@ -19,7 +19,7 @@ export type OrderItem = {
   image: string;
 };
 
-export type OrderStatus = 'CREADO' | 'EDITANDO' | 'PENDIENTE_PAGO' | 'PAGADO' | 'PREPARANDO' | 'EN_CAMINO' | 'ENTREGADO';
+export type OrderStatus = 'INIT' | 'IN_PROGRESS' | 'READY' | 'DELIVERED' | 'PAYED' | 'BOT_READY' | 'CREADO' | 'EDITANDO' | 'PENDIENTE_PAGO';
 
 export type Screen = 'confirmation' | 'catalog' | 'payment' | 'tracking';
 
@@ -48,7 +48,7 @@ function getOrderIdFromURL(): number | null {
 function getInitialStatus(screen: Screen): OrderStatus {
   if (screen === 'catalog') return 'EDITANDO';
   if (screen === 'payment') return 'PENDIENTE_PAGO';
-  if (screen === 'tracking') return 'PAGADO';
+  if (screen === 'tracking') return 'PAYED';
   return 'CREADO';
 }
 
@@ -182,7 +182,7 @@ export default function App() {
 
   const handlePaymentComplete = (method: 'card' | 'transfer') => {
     setPaymentMethod(method);
-    setOrderStatus('PAGADO');
+    setOrderStatus('PAYED');
     setCurrentScreen('tracking');
   };
 
@@ -197,7 +197,7 @@ export default function App() {
     } else if (screen === 'payment') {
       setOrderStatus('PENDIENTE_PAGO');
     } else if (screen === 'tracking') {
-      setOrderStatus(orderStatus === 'CREADO' || orderStatus === 'EDITANDO' || orderStatus === 'PENDIENTE_PAGO' ? 'PAGADO' : orderStatus);
+      setOrderStatus(orderStatus === 'INIT' || orderStatus === 'EDITANDO' || orderStatus === 'PENDIENTE_PAGO' ? 'PAYED' : orderStatus);
     }
   };
 
@@ -205,8 +205,8 @@ export default function App() {
     setOrderStatus(status);
     
     // Solo actualizar Supabase para cambios manuales, no para la progresión automática
-    // Los estados automáticos (PREPARANDO, EN_CAMINO, ENTREGADO) solo se muestran en la UI
-    if (status === 'PAGADO' && order) {
+    // Los estados automáticos (IN_PROGRESS, READY, DELIVERED) solo se muestran en la UI
+    if (status === 'PAYED' && order) {
       // Solo actualizar Supabase cuando se paga
       await updateOrderStatus({ status: 'PAYED' });
     }
@@ -300,7 +300,7 @@ export default function App() {
             orderStatus={orderStatus}
             paymentMethod={paymentMethod}
             onViewMap={() => {
-              setOrderStatus('EN_CAMINO');
+              setOrderStatus('READY');
             }}
             onStatusUpdate={handleStatusUpdate}
           />

@@ -195,27 +195,36 @@ export type Database = {
       products: {
         Row: {
           business: Database["public"]["Enums"]["BUSINESS_TYPE"]
+          category: Database["public"]["Enums"]["CATEGORIES"] | null
+          cost: number
           created_at: string
           id: number
           image_url: string
           name: string
           price: number
+          stock: number
         }
         Insert: {
           business?: Database["public"]["Enums"]["BUSINESS_TYPE"]
+          category?: Database["public"]["Enums"]["CATEGORIES"] | null
+          cost?: number
           created_at?: string
           id?: number
           image_url: string
           name: string
           price: number
+          stock?: number
         }
         Update: {
           business?: Database["public"]["Enums"]["BUSINESS_TYPE"]
+          category?: Database["public"]["Enums"]["CATEGORIES"] | null
+          cost?: number
           created_at?: string
           id?: number
           image_url?: string
           name?: string
           price?: number
+          stock?: number
         }
         Relationships: []
       }
@@ -267,6 +276,14 @@ export type Database = {
     }
     Enums: {
       BUSINESS_TYPE: "JAGUARES" | "PUESTO"
+      CATEGORIES:
+        | "CAFETERIA"
+        | "DESSERTS"
+        | "COMBOS"
+        | "SNAKS"
+        | "BAKERY"
+        | "MEAL"
+        | "DRINKS"
       ORDER_TYPE: "GUBERNAMENTAL" | "CASETA"
       STATUS_ORDER:
         | "INIT"
@@ -275,6 +292,7 @@ export type Database = {
         | "DELIVERED"
         | "PAYED"
         | "BOT_READY"
+        | "ON_THE_WAY"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -403,6 +421,15 @@ export const Constants = {
   public: {
     Enums: {
       BUSINESS_TYPE: ["JAGUARES", "PUESTO"],
+      CATEGORIES: [
+        "CAFETERIA",
+        "DESSERTS",
+        "COMBOS",
+        "SNAKS",
+        "BAKERY",
+        "MEAL",
+        "DRINKS",
+      ],
       ORDER_TYPE: ["GUBERNAMENTAL", "CASETA"],
       STATUS_ORDER: [
         "INIT",
@@ -411,6 +438,7 @@ export const Constants = {
         "DELIVERED",
         "PAYED",
         "BOT_READY",
+        "ON_THE_WAY",
       ],
     },
   },

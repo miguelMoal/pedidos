@@ -1,5 +1,8 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { OrderStatus } from '../App';
+import { Database } from '../supabase/database.types';
+
+type DatabaseOrderStatus = Database['public']['Enums']['STATUS_ORDER'];
 import { Button } from './ui/button';
 import { MapPin, Clock, CheckCircle2, Package, Truck, Phone, MessageCircle, Navigation, User, Store } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -25,35 +28,40 @@ export default function OrderTracking({
   const [eta, setEta] = useState(18);
   
   // Store de órdenes para obtener el código de verificación
-  const { order } = useOrderStore();
+  const { order, updateOrderStatus } = useOrderStore();
 
-  // Auto-progression of order status
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-
-    if (orderStatus === 'PAGADO' || orderStatus === 'CREADO') {
-      // After 3 seconds, move to PREPARANDO
-      timer = setTimeout(() => {
-        onStatusUpdate('PREPARANDO');
-      }, 3000);
-    } else if (orderStatus === 'PREPARANDO') {
-      // After 6 seconds, move to EN_CAMINO
-      timer = setTimeout(() => {
-        onStatusUpdate('EN_CAMINO');
-      }, 6000);
-    } else if (orderStatus === 'EN_CAMINO') {
-      // After 8 seconds, move to ENTREGADO
-      timer = setTimeout(() => {
-        onStatusUpdate('ENTREGADO');
-      }, 8000);
+  // Función para mapear estados de UI a estados de base de datos
+  const mapToDatabaseStatus = (uiStatus: OrderStatus): DatabaseOrderStatus => {
+    switch (uiStatus) {
+      case 'PAYED':
+        return 'PAYED';
+      case 'IN_PROGRESS':
+        return 'IN_PROGRESS';
+      case 'READY':
+        return 'READY';
+      case 'DELIVERED':
+        return 'DELIVERED';
+      default:
+        return 'INIT';
     }
+  };
 
-    return () => clearTimeout(timer);
-  }, [orderStatus, onStatusUpdate]);
+  // Función para actualizar estado en Supabase
+  const handleStatusUpdate = async (newStatus: OrderStatus) => {
+    try {
+      if (order) {
+        const dbStatus = mapToDatabaseStatus(newStatus);
+        await updateOrderStatus({ status: dbStatus });
+        onStatusUpdate(newStatus);
+      }
+    } catch (error) {
+      console.error('Error al actualizar estado:', error);
+    }
+  };
 
-  // Animate delivery when EN_CAMINO
+  // Animate delivery when READY
   useEffect(() => {
-    if (orderStatus === 'EN_CAMINO') {
+    if (orderStatus === 'READY') {
       const interval = setInterval(() => {
         setDeliveryProgress((prev) => {
           if (prev >= 100) {
@@ -72,7 +80,7 @@ export default function OrderTracking({
 
       return () => clearInterval(interval);
     } else {
-      // Reset position when not EN_CAMINO
+      // Reset position when not READY
       setDeliveryProgress(0);
       setDriverPosition({ x: 20, y: 70 });
       setEta(18);
@@ -80,33 +88,33 @@ export default function OrderTracking({
   }, [orderStatus]);
 
   const steps = [
-    { id: 'PAGADO', label: 'Pedido confirmado', icon: CheckCircle2, status: 'PAGADO' as OrderStatus },
-    { id: 'PREPARANDO', label: 'Preparando', icon: Package, status: 'PREPARANDO' as OrderStatus },
-    { id: 'EN_CAMINO', label: 'En camino', icon: Truck, status: 'EN_CAMINO' as OrderStatus },
-    { id: 'ENTREGADO', label: 'Entregado', icon: CheckCircle2, status: 'ENTREGADO' as OrderStatus }
+    { id: 'PAYED', label: 'Pedido confirmado', icon: CheckCircle2, status: 'PAYED' as OrderStatus },
+    { id: 'IN_PROGRESS', label: 'Preparando', icon: Package, status: 'IN_PROGRESS' as OrderStatus },
+    { id: 'READY', label: 'En camino', icon: Truck, status: 'READY' as OrderStatus },
+    { id: 'DELIVERED', label: 'Entregado', icon: CheckCircle2, status: 'DELIVERED' as OrderStatus }
   ];
 
   const getCurrentStepIndex = () => {
-    if (orderStatus === 'PAGADO') return 0;
-    if (orderStatus === 'PREPARANDO') return 1;
-    if (orderStatus === 'EN_CAMINO') return 2;
-    if (orderStatus === 'ENTREGADO') return 3;
+    if (orderStatus === 'PAYED') return 0;
+    if (orderStatus === 'IN_PROGRESS') return 1;
+    if (orderStatus === 'READY') return 2;
+    if (orderStatus === 'DELIVERED') return 3;
     return 0;
   };
 
   const currentStepIndex = getCurrentStepIndex();
 
   const getStatusColor = () => {
-    if (orderStatus === 'ENTREGADO') return '#4CAF50';
-    if (orderStatus === 'EN_CAMINO') return '#046741';
-    if (orderStatus === 'PREPARANDO') return '#FFD54F';
+    if (orderStatus === 'DELIVERED') return '#4CAF50';
+    if (orderStatus === 'READY') return '#046741';
+    if (orderStatus === 'IN_PROGRESS') return '#FFD54F';
     return '#046741';
   };
 
   const getStatusText = () => {
-    if (orderStatus === 'ENTREGADO') return 'Entregado ✓';
-    if (orderStatus === 'EN_CAMINO') return 'En camino';
-    if (orderStatus === 'PREPARANDO') return 'Preparando';
+    if (orderStatus === 'DELIVERED') return 'Entregado ✓';
+    if (orderStatus === 'READY') return 'En camino';
+    if (orderStatus === 'IN_PROGRESS') return 'Preparando';
     return 'Pedido confirmado';
   };
 
@@ -158,7 +166,7 @@ export default function OrderTracking({
                 return (
                   <button
                     key={step.id}
-                    onClick={() => onStatusUpdate(step.status)}
+                    onClick={() => handleStatusUpdate(step.status)}
                     className="flex flex-col items-center hover:scale-105 transition-transform cursor-pointer"
                   >
                     <motion.div
@@ -219,18 +227,18 @@ export default function OrderTracking({
             <div className="relative">
               <motion.div
                 animate={{ 
-                  scale: orderStatus === 'PREPARANDO' ? [1, 1.1, 1] : 1 
+                  scale: orderStatus === 'IN_PROGRESS' ? [1, 1.1, 1] : 1 
                 }}
-                transition={{ repeat: orderStatus === 'PREPARANDO' ? Infinity : 0, duration: 2 }}
+                transition={{ repeat: orderStatus === 'IN_PROGRESS' ? Infinity : 0, duration: 2 }}
                 className={`w-14 h-14 rounded-full flex items-center justify-center shadow-xl ${
-                  orderStatus === 'PREPARANDO' 
+                  orderStatus === 'IN_PROGRESS' 
                     ? 'bg-[#FFD54F]' 
                     : 'bg-[#046741]'
                 }`}
               >
                 <Store className="w-7 h-7 text-white" />
               </motion.div>
-              {orderStatus === 'PREPARANDO' && (
+              {orderStatus === 'IN_PROGRESS' && (
                 <motion.div
                   animate={{ scale: [1, 1.5, 1], opacity: [0.8, 0, 0.8] }}
                   transition={{ repeat: Infinity, duration: 2 }}
@@ -238,7 +246,7 @@ export default function OrderTracking({
                 />
               )}
               <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-white px-2 py-1 rounded shadow-sm text-xs">
-                {orderStatus === 'PREPARANDO' ? '🍳 Preparando...' : '🏪 Restaurante'}
+                {orderStatus === 'IN_PROGRESS' ? '🍳 Preparando...' : '🏪 Restaurante'}
               </div>
             </div>
           </motion.div>
@@ -254,21 +262,21 @@ export default function OrderTracking({
               <motion.div
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ 
-                  repeat: orderStatus === 'ENTREGADO' ? 0 : Infinity, 
+                  repeat: orderStatus === 'DELIVERED' ? 0 : Infinity, 
                   duration: 2 
                 }}
                 className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                  orderStatus === 'ENTREGADO' 
+                  orderStatus === 'DELIVERED' 
                     ? 'bg-green-500/20' 
                     : 'bg-[#046741]/20'
                 }`}
               >
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                  orderStatus === 'ENTREGADO' 
+                  orderStatus === 'DELIVERED' 
                     ? 'bg-green-500' 
                     : 'bg-[#046741]'
                 }`}>
-                  {orderStatus === 'ENTREGADO' ? (
+                  {orderStatus === 'DELIVERED' ? (
                     <CheckCircle2 className="w-4 h-4 text-white" />
                   ) : (
                     <Navigation className="w-4 h-4 text-white" />
@@ -276,18 +284,18 @@ export default function OrderTracking({
                 </div>
               </motion.div>
               <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-white px-2 py-1 rounded shadow-sm text-xs">
-                {orderStatus === 'ENTREGADO' ? '✓ Entregado' : 'Tu ubicación'}
+                {orderStatus === 'DELIVERED' ? '✓ Entregado' : 'Tu ubicación'}
               </div>
             </div>
           </motion.div>
 
-          {/* Driver Position - Only show when EN_CAMINO or ENTREGADO */}
-          {(orderStatus === 'EN_CAMINO' || orderStatus === 'ENTREGADO') && (
+          {/* Driver Position - Only show when READY or DELIVERED */}
+          {(orderStatus === 'READY' || orderStatus === 'DELIVERED') && (
             <>
               <motion.div
                 animate={{
-                  left: orderStatus === 'ENTREGADO' ? '80%' : `${driverPosition.x}%`,
-                  top: orderStatus === 'ENTREGADO' ? '20%' : `${driverPosition.y}%`
+                  left: orderStatus === 'DELIVERED' ? '80%' : `${driverPosition.x}%`,
+                  top: orderStatus === 'DELIVERED' ? '20%' : `${driverPosition.y}%`
                 }}
                 transition={{ type: 'spring', damping: 20 }}
                 className="absolute"
@@ -303,7 +311,7 @@ export default function OrderTracking({
               </motion.div>
 
               {/* Route Line */}
-              {orderStatus === 'EN_CAMINO' && (
+              {orderStatus === 'READY' && (
                 <svg className="absolute inset-0 w-full h-full pointer-events-none">
                   <motion.path
                     d={`M ${driverPosition.x}% ${driverPosition.y}% Q ${(driverPosition.x + 80) / 2}% ${(driverPosition.y + 20) / 2 - 10}% 80% 20%`}
@@ -344,7 +352,7 @@ export default function OrderTracking({
                   />
                   <span>{getStatusText()}</span>
                 </div>
-                {orderStatus === 'EN_CAMINO' && (
+                {orderStatus === 'READY' && (
                   <div className="text-right">
                     <p className="text-sm text-gray-600">Tiempo estimado</p>
                     <p className="text-gray-900">{Math.ceil(eta)} min</p>
@@ -353,8 +361,8 @@ export default function OrderTracking({
               </div>
 
               <AnimatePresence mode="wait">
-                {/* PAGADO State */}
-                {paymentMethod === 'transfer' && orderStatus === 'PAGADO' ? (
+                {/* PAYED State */}
+                {paymentMethod === 'transfer' && orderStatus === 'PAYED' ? (
                   <motion.div
                     key="validating"
                     initial={{ opacity: 0 }}
@@ -370,7 +378,7 @@ export default function OrderTracking({
                       Estamos verificando tu transferencia. Te notificaremos cuando esté confirmado.
                     </p>
                   </motion.div>
-                ) : orderStatus === 'PAGADO' ? (
+                ) : orderStatus === 'PAYED' ? (
                   <motion.div
                     key="confirmed"
                     initial={{ opacity: 0 }}
@@ -393,7 +401,7 @@ export default function OrderTracking({
                       </div>
                     )}
                   </motion.div>
-                ) : orderStatus === 'PREPARANDO' ? (
+                ) : orderStatus === 'IN_PROGRESS' ? (
                   /* PREPARANDO State */
                   <motion.div
                     key="preparing"
@@ -417,7 +425,7 @@ export default function OrderTracking({
                       </div>
                     </div>
                   </motion.div>
-                ) : orderStatus === 'ENTREGADO' ? (
+                ) : orderStatus === 'DELIVERED' ? (
                   /* ENTREGADO State */
                   <motion.div
                     key="delivered"
@@ -448,7 +456,7 @@ export default function OrderTracking({
                     {/* Driver Info */}
                     <div className="flex items-center gap-4 mb-4">
                       <div className="w-16 h-16 rounded-full bg-[#046741] flex items-center justify-center overflow-hidden">
-                        <ImageWithFallback 
+                        <img 
                           src="https://images.unsplash.com/photo-1543499459-d1460946bdc6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkZWxpdmVyeSUyMHBlcnNvbiUyMHBvcnRyYWl0fGVufDF8fHx8MTc1OTk1MDE4NXww&ixlib=rb-4.1.0&q=80&w=1080"
                           alt="Carlos Martínez"
                           className="w-full h-full object-cover"

@@ -18,7 +18,7 @@ const generateVerificationCode = (): string => {
 };
 
 import { validateCoupon as validateCouponSupabase, getAllCoupons, getCouponById } from '../supabase/actions/coupons';
-import { insertItemBooth, insertItemGubernamental, updateOrder } from '../supabase/actions/orders';
+import { insertItemBooth, insertItemGubernamental, updateOrder, getItemBoothByOrderId, getItemGubernamentalByOrderId } from '../supabase/actions/orders';
 
 type PaymentProps = {
   orderItems: OrderItem[];
@@ -111,6 +111,38 @@ export default function Payment({
 
     loadExistingCoupon();
   }, [order?.coupon_applied]);
+
+  // Cargar datos de entrega existentes
+  useEffect(() => {
+    const loadExistingDeliveryData = async () => {
+      if (order?.order_type && order.id) {
+        console.log('La orden ya tiene un tipo de entrega:', order.order_type);
+        setDeliveryType(order.order_type as 'CASETA' | 'GUBERNAMENTAL');
+        
+        try {
+          if (order.order_type === 'CASETA') {
+            const boothData = await getItemBoothByOrderId(order.id);
+            if (boothData) {
+              setCarModel(boothData.car_model || '');
+              setPlates(boothData.plates || '');
+              console.log('Datos de caseta cargados:', boothData);
+            }
+          } else if (order.order_type === 'GUBERNAMENTAL') {
+            const gubernamentalData = await getItemGubernamentalByOrderId(order.id);
+            if (gubernamentalData) {
+              setBuilding(gubernamentalData.building || '');
+              setFloor(gubernamentalData.floor || '');
+              console.log('Datos gubernamentales cargados:', gubernamentalData);
+            }
+          }
+        } catch (error) {
+          console.error('Error al cargar datos de entrega existentes:', error);
+        }
+      }
+    };
+
+    loadExistingDeliveryData();
+  }, [order?.order_type, order?.id]);
 
   // Función para aplicar cupón
   const handleApplyCoupon = async () => {
@@ -613,7 +645,14 @@ export default function Payment({
             {/* Caseta Form */}
             {deliveryType === 'CASETA' && (
               <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                <h4 className="text-gray-900 font-medium">Datos del vehículo</h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-gray-900 font-medium">Datos del vehículo</h4>
+                  {order?.order_type === 'CASETA' && (
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                      ✓ Datos guardados
+                    </span>
+                  )}
+                </div>
                 <div className="space-y-3">
                   <div>
                     <Label htmlFor="carModel">Modelo del auto</Label>
@@ -642,7 +681,14 @@ export default function Payment({
             {/* Gubernamental Form */}
             {deliveryType === 'GUBERNAMENTAL' && (
               <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                <h4 className="text-gray-900 font-medium">Datos de la oficina</h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-gray-900 font-medium">Datos de la oficina</h4>
+                  {order?.order_type === 'GUBERNAMENTAL' && (
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                      ✓ Datos guardados
+                    </span>
+                  )}
+                </div>
                 <div className="space-y-3">
                   <div>
                     <Label htmlFor="building">Edificio</Label>

@@ -349,3 +349,51 @@ export const insertItemGubernamental = async (itemGubernamentalData: ItemGuberna
     throw error;
   }
 };
+
+// Obtener datos de caseta por order_id
+export const getItemBoothByOrderId = async (orderId: number) => {
+  try {
+    console.log('getItemBoothByOrderId - Order ID:', orderId);
+    
+    const { data, error } = await supabase
+      .from('item_booth')
+      .select('*')
+      .eq('order_id', orderId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+      console.error('Error al obtener datos de caseta:', error);
+      throw error;
+    }
+
+    console.log('getItemBoothByOrderId - Datos obtenidos:', data);
+    return data;
+  } catch (error) {
+    console.error('Error en getItemBoothByOrderId:', error);
+    throw error;
+  }
+};
+
+// Obtener datos gubernamentales por order_id
+export const getItemGubernamentalByOrderId = async (orderId: number) => {
+  try {
+    console.log('getItemGubernamentalByOrderId - Order ID:', orderId);
+    
+    const { data, error } = await supabase
+      .from('item_gubernamental')
+      .select('*')
+      .eq('order_id', orderId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+      console.error('Error al obtener datos gubernamentales:', error);
+      throw error;
+    }
+
+    console.log('getItemGubernamentalByOrderId - Datos obtenidos:', data);
+    return data;
+  } catch (error) {
+    console.error('Error en getItemGubernamentalByOrderId:', error);
+    throw error;
+  }
+};

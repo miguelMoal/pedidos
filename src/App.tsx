@@ -19,7 +19,7 @@ export type OrderItem = {
   image: string;
 };
 
-export type OrderStatus = 'INIT' | 'IN_PROGRESS' | 'READY' | 'DELIVERED' | 'PAYED' | 'BOT_READY' | 'CREADO' | 'EDITANDO' | 'PENDIENTE_PAGO';
+export type OrderStatus = 'INIT' | 'IN_PROGRESS' | 'READY' | 'ON_THE_WAY' | 'DELIVERED' | 'PAYED' | 'BOT_READY' | 'CREADO' | 'EDITANDO' | 'PENDIENTE_PAGO';
 
 export type Screen = 'confirmation' | 'catalog' | 'payment' | 'tracking';
 
@@ -48,7 +48,7 @@ function getOrderIdFromURL(): number | null {
 function getInitialStatus(screen: Screen): OrderStatus {
   if (screen === 'catalog') return 'EDITANDO';
   if (screen === 'payment') return 'PENDIENTE_PAGO';
-  if (screen === 'tracking') return 'PAYED';
+  if (screen === 'tracking') return 'INIT'; // Estado inicial hasta que se cargue el real
   return 'CREADO';
 }
 
@@ -58,6 +58,23 @@ export default function App() {
   
   // Store de órdenes
   const { order, orderItems: supabaseOrderItems, loading, error, loadOrderWithItems, updateOrderStatus, updateItemQuantityInOrder, removeItemFromOrder } = useOrderStore();
+
+  // Cargar orden cuando se esté en tracking
+  useEffect(() => {
+    if (currentScreen === 'tracking' && !order && !loading) {
+      const orderId = getOrderIdFromURL();
+      if (orderId) {
+        loadOrderWithItems(orderId);
+      }
+    }
+  }, [currentScreen, order, loading, loadOrderWithItems]);
+
+  // Actualizar el estado cuando se carga la orden
+  useEffect(() => {
+    if (order && order.status && currentScreen === 'tracking') {
+      setOrderStatus(order.status as OrderStatus);
+    }
+  }, [order, currentScreen]);
   
   // Mock order from WhatsApp
   const [orderItems, setOrderItems] = useState<OrderItem[]>([
@@ -186,7 +203,7 @@ export default function App() {
     setCurrentScreen('tracking');
   };
 
-  const handleNavigate = (screen: Screen) => {
+  const handleNavigate = async (screen: Screen) => {
     setCurrentScreen(screen);
     
     // Actualizar el estado según la pantalla
@@ -197,7 +214,13 @@ export default function App() {
     } else if (screen === 'payment') {
       setOrderStatus('PENDIENTE_PAGO');
     } else if (screen === 'tracking') {
-      setOrderStatus(orderStatus === 'INIT' || orderStatus === 'EDITANDO' || orderStatus === 'PENDIENTE_PAGO' ? 'PAYED' : orderStatus);
+      // Si hay una orden cargada, usar su estado real
+      if (order && order.status) {
+        setOrderStatus(order.status as OrderStatus);
+      } else {
+        // Si no hay orden cargada, usar PAYED como fallback
+        setOrderStatus(orderStatus === 'INIT' || orderStatus === 'EDITANDO' || orderStatus === 'PENDIENTE_PAGO' ? 'PAYED' : orderStatus);
+      }
     }
   };
 

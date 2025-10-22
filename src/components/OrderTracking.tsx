@@ -39,6 +39,8 @@ export default function OrderTracking({
         return 'IN_PROGRESS';
       case 'READY':
         return 'READY';
+      case 'ON_THE_WAY':
+        return 'ON_THE_WAY';
       case 'DELIVERED':
         return 'DELIVERED';
       default:
@@ -59,9 +61,9 @@ export default function OrderTracking({
     }
   };
 
-  // Animate delivery when READY
+  // Animate delivery when ON_THE_WAY
   useEffect(() => {
-    if (orderStatus === 'READY') {
+    if (orderStatus === 'ON_THE_WAY') {
       const interval = setInterval(() => {
         setDeliveryProgress((prev) => {
           if (prev >= 100) {
@@ -80,7 +82,7 @@ export default function OrderTracking({
 
       return () => clearInterval(interval);
     } else {
-      // Reset position when not READY
+      // Reset position when not ON_THE_WAY
       setDeliveryProgress(0);
       setDriverPosition({ x: 20, y: 70 });
       setEta(18);
@@ -90,7 +92,8 @@ export default function OrderTracking({
   const steps = [
     { id: 'PAYED', label: 'Pedido confirmado', icon: CheckCircle2, status: 'PAYED' as OrderStatus },
     { id: 'IN_PROGRESS', label: 'Preparando', icon: Package, status: 'IN_PROGRESS' as OrderStatus },
-    { id: 'READY', label: 'En camino', icon: Truck, status: 'READY' as OrderStatus },
+    { id: 'READY', label: 'Listo para entregar', icon: Package, status: 'READY' as OrderStatus },
+    { id: 'ON_THE_WAY', label: 'En camino', icon: Truck, status: 'ON_THE_WAY' as OrderStatus },
     { id: 'DELIVERED', label: 'Entregado', icon: CheckCircle2, status: 'DELIVERED' as OrderStatus }
   ];
 
@@ -98,7 +101,8 @@ export default function OrderTracking({
     if (orderStatus === 'PAYED') return 0;
     if (orderStatus === 'IN_PROGRESS') return 1;
     if (orderStatus === 'READY') return 2;
-    if (orderStatus === 'DELIVERED') return 3;
+    if (orderStatus === 'ON_THE_WAY') return 3;
+    if (orderStatus === 'DELIVERED') return 4;
     return 0;
   };
 
@@ -106,14 +110,16 @@ export default function OrderTracking({
 
   const getStatusColor = () => {
     if (orderStatus === 'DELIVERED') return '#4CAF50';
-    if (orderStatus === 'READY') return '#046741';
+    if (orderStatus === 'ON_THE_WAY') return '#046741';
+    if (orderStatus === 'READY') return '#FFA500';
     if (orderStatus === 'IN_PROGRESS') return '#FFD54F';
     return '#046741';
   };
 
   const getStatusText = () => {
     if (orderStatus === 'DELIVERED') return 'Entregado ✓';
-    if (orderStatus === 'READY') return 'En camino';
+    if (orderStatus === 'ON_THE_WAY') return 'En camino';
+    if (orderStatus === 'READY') return 'Listo para entregar';
     if (orderStatus === 'IN_PROGRESS') return 'Preparando';
     return 'Pedido confirmado';
   };
@@ -289,8 +295,8 @@ export default function OrderTracking({
             </div>
           </motion.div>
 
-          {/* Driver Position - Only show when READY or DELIVERED */}
-          {(orderStatus === 'READY' || orderStatus === 'DELIVERED') && (
+          {/* Driver Position - Only show when ON_THE_WAY or DELIVERED */}
+          {(orderStatus === 'ON_THE_WAY' || orderStatus === 'DELIVERED') && (
             <>
               <motion.div
                 animate={{
@@ -311,7 +317,7 @@ export default function OrderTracking({
               </motion.div>
 
               {/* Route Line */}
-              {orderStatus === 'READY' && (
+              {orderStatus === 'ON_THE_WAY' && (
                 <svg className="absolute inset-0 w-full h-full pointer-events-none">
                   <motion.path
                     d={`M ${driverPosition.x}% ${driverPosition.y}% Q ${(driverPosition.x + 80) / 2}% ${(driverPosition.y + 20) / 2 - 10}% 80% 20%`}
@@ -352,7 +358,7 @@ export default function OrderTracking({
                   />
                   <span>{getStatusText()}</span>
                 </div>
-                {orderStatus === 'READY' && (
+                {orderStatus === 'ON_THE_WAY' && (
                   <div className="text-right">
                     <p className="text-sm text-gray-600">Tiempo estimado</p>
                     <p className="text-gray-900">{Math.ceil(eta)} min</p>
@@ -425,30 +431,34 @@ export default function OrderTracking({
                       </div>
                     </div>
                   </motion.div>
-                ) : orderStatus === 'DELIVERED' ? (
-                  /* ENTREGADO State */
+                ) : orderStatus === 'READY' ? (
+                  /* READY State */
                   <motion.div
-                    key="delivered"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
+                    key="ready"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="text-center py-8"
+                    className="text-center py-6"
                   >
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: 'spring' }}
-                      className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
-                    >
-                      <span className="text-4xl">✓</span>
-                    </motion.div>
-                    <h2 className="text-gray-900 mb-2">¡Pedido entregado!</h2>
-                    <p className="text-gray-600">Disfruta tu pedido</p>
+                    <div className="w-16 h-16 bg-[#FFA500] rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Package className="w-8 h-8 text-white" />
+                    </div>
+                    <h2 className="text-gray-900 mb-2">¡Pedido listo! 📦</h2>
+                    <p className="text-gray-600 text-sm mb-4">
+                      Tu pedido está listo para ser entregado
+                    </p>
+                    <div className="bg-[#FFA500]/10 rounded-xl p-3 flex items-center gap-3 max-w-xs mx-auto">
+                      <Clock className="w-5 h-5 text-[#FFA500]" />
+                      <div className="text-left">
+                        <p className="text-xs text-gray-600">Estado</p>
+                        <p className="text-sm text-gray-900">Listo para entregar</p>
+                      </div>
+                    </div>
                   </motion.div>
-                ) : (
-                  /* EN_CAMINO State */
+                ) : orderStatus === 'ON_THE_WAY' ? (
+                  /* ON_THE_WAY State */
                   <motion.div
-                    key="delivery"
+                    key="on_the_way"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -492,7 +502,27 @@ export default function OrderTracking({
                       </Button>
                     </a>
                   </motion.div>
-                )}
+                ) : orderStatus === 'DELIVERED' ? (
+                  /* ENTREGADO State */
+                  <motion.div
+                    key="delivered"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-center py-8"
+                  >
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring' }}
+                      className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
+                    >
+                      <span className="text-4xl">✓</span>
+                    </motion.div>
+                    <h2 className="text-gray-900 mb-2">¡Pedido entregado!</h2>
+                    <p className="text-gray-600">Disfruta tu pedido</p>
+                  </motion.div>
+                ) : null}
               </AnimatePresence>
             </div>
           </motion.div>

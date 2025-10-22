@@ -7,14 +7,19 @@ import { ArrowLeft, CreditCard, Building2, Lock, CheckCircle2, CheckCircle, Car,
 import { toast } from 'sonner';
 import { useOrderStore } from '../store/ordersStore';
 
+// Lista de palabras para código de verificación
+const VERIFICATION_WORDS = [
+  'SOL', 'LUNA', 'MAR', 'CIELO', 'TIERRA', 'FUEGO', 'AGUA', 'AIRE', 'ARBOL', 'FLOR',
+  'GATO', 'PERRO', 'AVE', 'PEZ', 'OSO', 'LEON', 'TIGRE', 'LOBO', 'ZEBRA', 'ELEFANTE',
+  'CASA', 'PUERTA', 'VENTANA', 'MESA', 'SILLA', 'LIBRO', 'LAPIZ', 'PAPEL', 'BOLSA', 'MALETA',
+  'AUTO', 'BICI', 'TREN', 'AVION', 'BARCO', 'MOTO', 'BUS', 'TAXI', 'CAMION', 'TRUCK',
+  'ROJO', 'AZUL', 'VERDE', 'AMARILLO', 'NEGRO', 'BLANCO', 'GRIS', 'MORADO', 'ROSA', 'NARANJA'
+];
+
 // Función para generar código de verificación
 const generateVerificationCode = (): string => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let result = '';
-  for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+  const randomIndex = Math.floor(Math.random() * VERIFICATION_WORDS.length);
+  return VERIFICATION_WORDS[randomIndex];
 };
 
 import { validateCoupon as validateCouponSupabase, getAllCoupons, getCouponById } from '../supabase/actions/coupons';

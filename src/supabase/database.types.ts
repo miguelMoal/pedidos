@@ -14,6 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      business: {
+        Row: {
+          created_at: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
       coupons: {
         Row: {
           code: string
@@ -146,6 +161,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          business_id: number
           confirmation_code: string | null
           coupon_applied: number | null
           created_at: string
@@ -156,6 +172,7 @@ export type Database = {
           user_phone: string
         }
         Insert: {
+          business_id?: number
           confirmation_code?: string | null
           coupon_applied?: number | null
           created_at?: string
@@ -166,6 +183,7 @@ export type Database = {
           user_phone: string
         }
         Update: {
+          business_id?: number
           confirmation_code?: string | null
           coupon_applied?: number | null
           created_at?: string
@@ -176,6 +194,13 @@ export type Database = {
           user_phone?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_coupon_applied_fkey"
             columns: ["coupon_applied"]

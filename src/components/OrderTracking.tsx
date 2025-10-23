@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { OrderStatus } from '../App';
 import { Database } from '../supabase/database.types';
-
-type DatabaseOrderStatus = Database['public']['Enums']['STATUS_ORDER'];
 import { Button } from './ui/button';
 import { MapPin, Clock, CheckCircle2, Package, Truck, Phone, MessageCircle, Navigation, User, Store } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useOrderStore } from '../store/ordersStore';
+import DeliveryMap from './DeliveryMap';
+
+type DatabaseOrderStatus = Database['public']['Enums']['STATUS_ORDER'];
 
 type OrderTrackingProps = {
   orderStatus: OrderStatus;
@@ -201,137 +202,16 @@ export default function OrderTracking({
       </div>
 
       {/* Map Container */}
-      <div className="flex-1 relative overflow-hidden">
-        {/* Map Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200">
-          {/* Grid */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="grid grid-cols-6 grid-rows-6 h-full">
-              {Array.from({ length: 36 }).map((_, i) => (
-                <div key={i} className="border border-gray-400" />
-              ))}
-            </div>
-          </div>
-
-          {/* Streets */}
-          <div className="absolute inset-0">
-            <div className="absolute top-1/4 left-0 right-0 h-2 bg-gray-300" />
-            <div className="absolute top-2/4 left-0 right-0 h-2 bg-gray-300" />
-            <div className="absolute top-3/4 left-0 right-0 h-2 bg-gray-300" />
-            <div className="absolute left-1/4 top-0 bottom-0 w-2 bg-gray-300" />
-            <div className="absolute left-2/4 top-0 bottom-0 w-2 bg-gray-300" />
-            <div className="absolute left-3/4 top-0 bottom-0 w-2 bg-gray-300" />
-          </div>
-
-          {/* Restaurant/Store Location */}
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="absolute"
-            style={{ left: '20%', top: '70%' }}
-          >
-            <div className="relative">
-              <motion.div
-                animate={{ 
-                  scale: orderStatus === 'IN_PROGRESS' ? [1, 1.1, 1] : 1 
-                }}
-                transition={{ repeat: orderStatus === 'IN_PROGRESS' ? Infinity : 0, duration: 2 }}
-                className={`w-14 h-14 rounded-full flex items-center justify-center shadow-xl ${
-                  orderStatus === 'IN_PROGRESS' 
-                    ? 'bg-[#FFD54F]' 
-                    : 'bg-[#046741]'
-                }`}
-              >
-                <Store className="w-7 h-7 text-white" />
-              </motion.div>
-              {orderStatus === 'IN_PROGRESS' && (
-                <motion.div
-                  animate={{ scale: [1, 1.5, 1], opacity: [0.8, 0, 0.8] }}
-                  transition={{ repeat: Infinity, duration: 2 }}
-                  className="absolute inset-0 w-14 h-14 rounded-full bg-[#FFD54F]/30"
-                />
-              )}
-              <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-white px-2 py-1 rounded shadow-sm text-xs">
-                {orderStatus === 'IN_PROGRESS' ? '🍳 Preparando...' : '🏪 Restaurante'}
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Your Location (Destination) */}
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="absolute"
-            style={{ left: '80%', top: '20%' }}
-          >
-            <div className="relative">
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ 
-                  repeat: orderStatus === 'DELIVERED' ? 0 : Infinity, 
-                  duration: 2 
-                }}
-                className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                  orderStatus === 'DELIVERED' 
-                    ? 'bg-green-500/20' 
-                    : 'bg-[#046741]/20'
-                }`}
-              >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                  orderStatus === 'DELIVERED' 
-                    ? 'bg-green-500' 
-                    : 'bg-[#046741]'
-                }`}>
-                  {orderStatus === 'DELIVERED' ? (
-                    <CheckCircle2 className="w-4 h-4 text-white" />
-                  ) : (
-                    <Navigation className="w-4 h-4 text-white" />
-                  )}
-                </div>
-              </motion.div>
-              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-white px-2 py-1 rounded shadow-sm text-xs">
-                {orderStatus === 'DELIVERED' ? '✓ Entregado' : 'Tu ubicación'}
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Driver Position - Only show when ON_THE_WAY or DELIVERED */}
-          {(orderStatus === 'ON_THE_WAY' || orderStatus === 'DELIVERED') && (
-            <>
-              <motion.div
-                animate={{
-                  left: orderStatus === 'DELIVERED' ? '80%' : `${driverPosition.x}%`,
-                  top: orderStatus === 'DELIVERED' ? '20%' : `${driverPosition.y}%`
-                }}
-                transition={{ type: 'spring', damping: 20 }}
-                className="absolute"
-              >
-                <motion.div
-                  animate={{ rotate: -45 }}
-                  className="relative"
-                >
-                  <div className="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center border-2 border-[#046741]" style={{ transform: 'rotate(45deg)' }}>
-                    <span className="text-xl">🧑</span>
-                  </div>
-                </motion.div>
-              </motion.div>
-
-              {/* Route Line */}
-              {orderStatus === 'ON_THE_WAY' && (
-                <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                  <motion.path
-                    d={`M ${driverPosition.x}% ${driverPosition.y}% Q ${(driverPosition.x + 80) / 2}% ${(driverPosition.y + 20) / 2 - 10}% 80% 20%`}
-                    stroke="#046741"
-                    strokeWidth="3"
-                    strokeDasharray="10,5"
-                    fill="none"
-                    opacity="0.5"
-                  />
-                </svg>
-              )}
-            </>
-          )}
-        </div>
+      <div className="flex-1 relative overflow-hidden min-h-[400px]">
+        <DeliveryMap
+          orderStatus={orderStatus}
+          driverPosition={driverPosition}
+          eta={eta}
+          onDriverPositionChange={setDriverPosition}
+          onEtaChange={setEta}
+          showDriver={true}
+          showRoute={true}
+        />
 
         {/* Bottom Info Card */}
         <div className="absolute bottom-0 left-0 right-0 z-10">

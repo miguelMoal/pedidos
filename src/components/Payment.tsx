@@ -58,6 +58,11 @@ export default function Payment({
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponError, setCouponError] = useState('');
   
+  // Phone fields
+  const [userPhone, setUserPhone] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [hasExistingPhone, setHasExistingPhone] = useState(false);
+  
   // Delivery type fields
   const [deliveryType, setDeliveryType] = useState<'CASETA' | 'GUBERNAMENTAL' | null>(null);
   
@@ -117,6 +122,16 @@ export default function Payment({
 
     loadExistingCoupon();
   }, [order?.coupon_applied]);
+
+  // Verificar si la orden ya tiene teléfono
+  useEffect(() => {
+    if (order?.user_phone) {
+      setUserPhone(order.user_phone);
+      setHasExistingPhone(true);
+    } else {
+      setHasExistingPhone(false);
+    }
+  }, [order?.user_phone]);
 
   // Cargar datos de entrega existentes
   useEffect(() => {
@@ -242,8 +257,36 @@ export default function Payment({
     return result;
   };
 
+  // Validar teléfono
+  const validatePhone = (phoneNumber: string): boolean => {
+    const phoneRegex = /^(\+52|52)?[0-9]{10}$/;
+    const cleanPhone = phoneNumber.replace(/\s/g, '');
+    return phoneRegex.test(cleanPhone);
+  };
+
+  // Manejar cambio de teléfono
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const cleanValue = value.replace(/[^\d\s+]/g, '');
+    setUserPhone(cleanValue);
+    if (phoneError) setPhoneError('');
+  };
+
   const handleCardPayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validar teléfono solo si no hay uno existente
+    if (!hasExistingPhone) {
+      if (!userPhone.trim()) {
+        setPhoneError('Por favor ingresa tu número de teléfono');
+        return;
+      }
+
+      if (!validatePhone(userPhone)) {
+        setPhoneError('Por favor ingresa un número de teléfono válido (10 dígitos)');
+        return;
+      }
+    }
     
     setIsProcessing(true);
     
@@ -263,7 +306,8 @@ export default function Payment({
           status: 'PAYED' as const,
           confirmation_code: verificationCode,
           coupon_applied: couponApplied ? (order.coupon_applied || null) : null,
-          order_type: deliveryType
+          order_type: deliveryType,
+          ...(hasExistingPhone ? {} : { user_phone: userPhone })
         };
         console.log('Payment - Datos a enviar a updateOrderStatus:', updateData);
         
@@ -327,6 +371,19 @@ export default function Payment({
   };
 
   const handleTransferPayment = async () => {
+    // Validar teléfono solo si no hay uno existente
+    if (!hasExistingPhone) {
+      if (!userPhone.trim()) {
+        setPhoneError('Por favor ingresa tu número de teléfono');
+        return;
+      }
+
+      if (!validatePhone(userPhone)) {
+        setPhoneError('Por favor ingresa un número de teléfono válido (10 dígitos)');
+        return;
+      }
+    }
+    
     setIsProcessing(true);
     
     try {
@@ -346,7 +403,8 @@ export default function Payment({
           status: 'PAYED' as const,
           confirmation_code: verificationCode,
           coupon_applied: couponApplied ? (order.coupon_applied || null) : null,
-          order_type: deliveryType
+          order_type: deliveryType,
+          ...(hasExistingPhone ? {} : { user_phone: userPhone })
         };
         console.log('Payment - Datos a enviar a updateOrderStatus (transfer):', updateData);
         
@@ -734,6 +792,51 @@ export default function Payment({
             )}
           </div>
         </div>
+
+        {/* Phone Section - Solo mostrar si no hay teléfono existente */}
+        {!hasExistingPhone && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <h3 className="text-gray-900 mb-3">Número de teléfono</h3>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                  Teléfono de contacto
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={userPhone}
+                  onChange={handlePhoneChange}
+                  placeholder="+52 55 1234 5678"
+                  className={`mt-1 ${phoneError ? 'border-red-500' : ''}`}
+                />
+                {phoneError && (
+                  <p className="text-red-500 text-sm mt-1">{phoneError}</p>
+                )}
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-blue-800 text-sm">
+                  📱 Usaremos este número para contactarte sobre tu pedido
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mostrar teléfono existente si ya hay uno */}
+        {hasExistingPhone && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <h3 className="text-gray-900 mb-3">Teléfono de contacto</h3>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              <p className="text-green-800 text-sm font-medium">
+                ✓ Teléfono registrado: {userPhone}
+              </p>
+              <p className="text-green-700 text-sm">
+                Usaremos este número para contactarte sobre tu pedido
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Payment Method Selection */}
         <div className="space-y-3">

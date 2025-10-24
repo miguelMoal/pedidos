@@ -251,6 +251,11 @@ export default function Payment({
     });
   }, [deliveryType, carModel, plates, building, floor, address]);
 
+  // Debug específico para address
+  useEffect(() => {
+    console.log('Estado address cambió:', address);
+  }, [address]);
+
   // Función para aplicar cupón
   const handleApplyCoupon = async () => {
     // Verificar si ya hay un cupón aplicado

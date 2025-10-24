@@ -397,3 +397,54 @@ export const getItemGubernamentalByOrderId = async (orderId: number) => {
     throw error;
   }
 };
+
+// Actualizar datos de caseta
+export const updateItemBooth = async (data: { order_id: number; car_model: string | null; plates: string | null }) => {
+  try {
+    console.log('updateItemBooth - Actualizando datos de caseta:', data);
+    
+    const { error } = await supabase
+      .from('item_booth')
+      .update({
+        car_model: data.car_model,
+        plates: data.plates
+      })
+      .eq('order_id', data.order_id);
+
+    if (error) {
+      console.error('Error al actualizar datos de caseta:', error);
+      throw error;
+    }
+
+    console.log('updateItemBooth - Datos de caseta actualizados exitosamente');
+  } catch (error) {
+    console.error('Error en updateItemBooth:', error);
+    throw error;
+  }
+};
+
+// Actualizar datos gubernamentales
+export const updateItemGubernamental = async (data: { order_id: number; building: string | null; floor: string | null; address: string | null }) => {
+  try {
+    console.log('updateItemGubernamental - Actualizando datos gubernamentales:', data);
+    
+    const { error } = await supabase
+      .from('item_gubernamental')
+      .update({
+        building: data.building,
+        floor: data.floor,
+        address: data.address
+      })
+      .eq('order_id', data.order_id);
+
+    if (error) {
+      console.error('Error al actualizar datos gubernamentales:', error);
+      throw error;
+    }
+
+    console.log('updateItemGubernamental - Datos gubernamentales actualizados exitosamente');
+  } catch (error) {
+    console.error('Error en updateItemGubernamental:', error);
+    throw error;
+  }
+};

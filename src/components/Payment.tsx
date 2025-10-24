@@ -23,7 +23,7 @@ const generateVerificationCode = (): string => {
 };
 
 import { validateCoupon as validateCouponSupabase, getAllCoupons, getCouponById } from '../supabase/actions/coupons';
-import { insertItemBooth, insertItemGubernamental, updateOrder, getItemBoothByOrderId, getItemGubernamentalByOrderId } from '../supabase/actions/orders';
+import { insertItemBooth, insertItemGubernamental, updateOrder, getItemBoothByOrderId, getItemGubernamentalByOrderId, updateItemBooth, updateItemGubernamental } from '../supabase/actions/orders';
 
 type PaymentProps = {
   orderItems: OrderItem[];
@@ -369,6 +369,63 @@ export default function Payment({
     return `521${cleanPhone}`;
   };
 
+  // Manejar datos de entrega (insertar o actualizar)
+  const handleDeliveryData = async () => {
+    if (deliveryType === 'CASETA' && (carModel || plates)) {
+      try {
+        // Verificar si ya existen datos de caseta
+        const existingBoothData = await getItemBoothByOrderId(order!.id);
+        
+        if (existingBoothData) {
+          // Actualizar datos existentes
+          await updateItemBooth({
+            order_id: order!.id,
+            car_model: carModel || null,
+            plates: plates || null
+          });
+          console.log('Payment - Datos de caseta actualizados exitosamente');
+        } else {
+          // Insertar nuevos datos
+          await insertItemBooth({
+            order_id: order!.id,
+            car_model: carModel || null,
+            plates: plates || null
+          });
+          console.log('Payment - Datos de caseta insertados exitosamente');
+        }
+      } catch (error) {
+        console.error('Payment - Error al manejar datos de caseta:', error);
+      }
+    } else if (deliveryType === 'GUBERNAMENTAL' && (building || floor || address)) {
+      try {
+        // Verificar si ya existen datos gubernamentales
+        const existingGubernamentalData = await getItemGubernamentalByOrderId(order!.id);
+        
+        if (existingGubernamentalData) {
+          // Actualizar datos existentes
+          await updateItemGubernamental({
+            order_id: order!.id,
+            building: building || null,
+            floor: floor || null,
+            address: address || null
+          });
+          console.log('Payment - Datos gubernamentales actualizados exitosamente');
+        } else {
+          // Insertar nuevos datos
+          await insertItemGubernamental({
+            order_id: order!.id,
+            building: building || null,
+            floor: floor || null,
+            address: address || null
+          } as any);
+          console.log('Payment - Datos gubernamentales insertados exitosamente');
+        }
+      } catch (error) {
+        console.error('Payment - Error al manejar datos gubernamentales:', error);
+      }
+    }
+  };
+
   // Validar si se puede proceder con el pago
   const canProceedWithPayment = () => {
     // Validar teléfono
@@ -439,30 +496,7 @@ export default function Payment({
         }
         
         // Guardar datos de entrega según el tipo seleccionado
-        if (deliveryType === 'CASETA' && (carModel || plates)) {
-          try {
-            await insertItemBooth({
-              order_id: order.id,
-              car_model: carModel || null,
-              plates: plates || null
-            });
-            console.log('Payment - Datos de caseta guardados exitosamente');
-          } catch (error) {
-            console.error('Payment - Error al guardar datos de caseta:', error);
-          }
-        } else if (deliveryType === 'GUBERNAMENTAL' && (building || floor || address)) {
-          try {
-            await insertItemGubernamental({
-              order_id: order.id,
-              building: building || null,
-              floor: floor || null,
-              address: address || null
-            } as any);
-            console.log('Payment - Datos gubernamentales guardados exitosamente');
-          } catch (error) {
-            console.error('Payment - Error al guardar datos gubernamentales:', error);
-          }
-        }
+        await handleDeliveryData();
         
         // Recargar la orden para obtener el código actualizado
         console.log('Payment - Recargando orden...');
@@ -533,30 +567,7 @@ export default function Payment({
         }
         
         // Guardar datos de entrega según el tipo seleccionado
-        if (deliveryType === 'CASETA' && (carModel || plates)) {
-          try {
-            await insertItemBooth({
-              order_id: order.id,
-              car_model: carModel || null,
-              plates: plates || null
-            });
-            console.log('Payment - Datos de caseta guardados exitosamente (transfer)');
-          } catch (error) {
-            console.error('Payment - Error al guardar datos de caseta (transfer):', error);
-          }
-        } else if (deliveryType === 'GUBERNAMENTAL' && (building || floor || address)) {
-          try {
-            await insertItemGubernamental({
-              order_id: order.id,
-              building: building || null,
-              floor: floor || null,
-              address: address || null
-            } as any);
-            console.log('Payment - Datos gubernamentales guardados exitosamente (transfer)');
-          } catch (error) {
-            console.error('Payment - Error al guardar datos gubernamentales (transfer):', error);
-          }
-        }
+        await handleDeliveryData();
         
         // Recargar la orden para obtener el código actualizado
         console.log('Payment - Recargando orden (transfer)...');

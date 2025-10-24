@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { OrderItem } from '../App';
 import { Button } from './ui/button';
 import { Check, Plus } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { useProductsStore, CatalogProduct } from '../store/productsStore';
 import { useOrderStore } from '../store/ordersStore';
 
@@ -20,21 +20,24 @@ const mockCatalogProducts: CatalogProduct[] = [
     name: 'Café del día',
     price: 12.99,
     image: 'https://via.placeholder.com/200x200?text=Café',
-    category: 'Cafetería'
+    category: 'Cafetería',
+    stock: 5
   },
   {
     id: '2',
     name: 'Concha de Vainilla',
     price: 8.99,
     image: 'https://via.placeholder.com/200x200?text=Concha',
-    category: 'Panadería'
+    category: 'Panadería',
+    stock: 0
   },
   {
     id: '3',
     name: 'Burrito',
     price: 3.99,
     image: 'https://via.placeholder.com/200x200?text=Burrito',
-    category: 'Comida'
+    category: 'Comida',
+    stock: 3
   }
 ];
 
@@ -147,21 +150,26 @@ export default function Catalog({
         <div className="grid grid-cols-2 gap-4">
           {catalogProducts.map((product) => {
             const quantity = getItemQuantity(product.id);
+            const isOutOfStock = product.stock === 0;
             return (
               <div
                 key={product.id}
-                className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                className={`bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 transition-shadow ${
+                  isOutOfStock 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : 'hover:shadow-md'
+                }`}
               >
                 <div className="aspect-square bg-gray-100 relative">
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    className={`w-full h-full object-cover ${isOutOfStock ? 'filter blur-sm' : ''}`}
                     onError={(e) => {
                       e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODgiIGhlaWdodD0iODgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBvcGFjaXR5PSIuMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIzLjciPjxyZWN0IHg9IjE2IiB5PSIxNiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2IiByeD0iNiIvPjxwYXRoIGQ9Im0xNiA1OCAxNi0xOCAzMiAzMiIvPjxjaXJjbGUgY3g9IjUzIiBjeT0iMzUiIHI9IjciLz48L3N2Zz4KCg==';
                     }}
                   />
-                  {quantity > 0 && (
+                  {quantity > 0 && !isOutOfStock && (
                     <div className="absolute top-2 right-2 bg-[#E31525] text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">
                       {quantity}
                     </div>
@@ -173,15 +181,17 @@ export default function Catalog({
                   <p className="text-gray-900 mb-3">${product.price.toFixed(2)}</p>
                   <button
                     onClick={() => handleAddItem(product)}
-                    disabled={isPaid}
+                    disabled={isPaid || isOutOfStock}
                     className={`w-full py-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors ${
-                      isPaid 
+                      isPaid || isOutOfStock
                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
                         : 'bg-[#046741] hover:bg-[#035530] text-white'
                     }`}
                   >
                     <Plus className="w-4 h-4" />
-                    <span className="text-sm">{isPaid ? 'Pagado' : 'Agregar'}</span>
+                    <span className="text-sm">
+                      {isPaid ? 'Pagado' : isOutOfStock ? 'Sin stock' : 'Agregar'}
+                    </span>
                   </button>
                 </div>
               </div>

@@ -9,6 +9,7 @@ export type CatalogProduct = {
   price: number;
   image: string;
   category: string;
+  stock: number;
 };
 
 interface ProductsState {
@@ -76,7 +77,8 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
       name: product.name,
       price: product.price,
       image: product.image_url,
-      category: product.business === 'PUESTO' ? 'Puesto' : 'Jaguares'
+      category: product.business === 'PUESTO' ? 'Puesto' : 'Jaguares',
+      stock: product.stock || 0
     }));
   },
 

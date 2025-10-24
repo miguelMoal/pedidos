@@ -283,7 +283,7 @@ export default function OrderTracking({
                       <div className="bg-gray-50 rounded-xl p-4 mx-4">
                         <p className="text-sm text-gray-600 mb-1">Código de verificación</p>
                         <p className="text-2xl font-mono font-bold text-gray-900">#{order.confirmation_code}</p>
-                        <p className="text-xs text-gray-500 mt-1">Guarda este código para tu referencia</p>
+                        <p className="text-xs text-gray-500 mt-1">Entrega este código a tu repartiidor</p>
                       </div>
                     )}
                   </motion.div>

@@ -84,29 +84,7 @@ export default function App() {
   }, [order, currentScreen, updateOrderStatus]);
   
   // Mock order from WhatsApp
-  const [orderItems, setOrderItems] = useState<OrderItem[]>([
-    {
-      id: '1',
-      name: 'Café del día',
-      price: 12.99,
-      quantity: 2,
-      image: image_9e507b2c5c9e8ada93fe4d3adfbaa432e2290684
-    },
-    {
-      id: '2',
-      name: 'Concha de Vainilla',
-      price: 8.99,
-      quantity: 1,
-      image: image_4688925daf76a3361de541d15592f70eaef0be38
-    },
-    {
-      id: '3',
-      name: 'Burrito',
-      price: 3.99,
-      quantity: 2,
-      image: image_10674549e1087c899d3be1c2a86eb79b2c46f6ae
-    }
-  ]);
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
 
   const [shippingCost] = useState(2.50);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'transfer' | null>(null);

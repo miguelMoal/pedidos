@@ -58,8 +58,23 @@ export default function OrderConfirmation({
       </div>
 
       {/* Content */}
-      <div className="flex-1 max-w-2xl mx-auto w-full px-4 py-6 space-y-4">
-        {orderItems.map((item) => (
+      <div  className="flex-1 max-w-2xl mx-auto w-full px-4 py-6 space-y-4">
+        {orderItems.length === 0 ? (
+          <div style={{ padding: "20px" }} className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ShoppingBag className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay artículos en tu pedido</h3>
+            <p style={{ marginBottom: "10px" }} className="text-gray-600 mb-6">Agrega algunos productos para continuar</p>
+            <Button
+              onClick={onEditOrder}
+              className="bg-[#046741] hover:bg-[#035530] text-white"
+            >
+              Agregar productos
+            </Button>
+          </div>
+        ) : (
+          orderItems.map((item) => (
           <div
             key={item.id}
             className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
@@ -113,7 +128,8 @@ export default function OrderConfirmation({
               </div>
             </div>
           </div>
-        ))}
+        ))
+        )}
       </div>
 
       {/* Sticky Footer */}

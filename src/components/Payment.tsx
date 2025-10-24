@@ -428,6 +428,11 @@ export default function Payment({
 
   // Validar si se puede proceder con el pago
   const canProceedWithPayment = () => {
+    // Validar que haya artículos en la orden
+    if (orderItems.length === 0) {
+      return { canProceed: false, message: 'No hay artículos en tu pedido. Agrega productos para continuar.' };
+    }
+
     // Validar teléfono
     if (!hasExistingPhone && (!userPhone.trim() || !validatePhone(userPhone))) {
       return { canProceed: false, message: 'Por favor ingresa tu número de teléfono' };
@@ -1100,6 +1105,8 @@ export default function Payment({
                   <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   Procesando...
                 </span>
+              ) : orderItems.length === 0 ? (
+                'Agrega productos para continuar'
               ) : (
                 'Pagar ahora'
               )}
@@ -1142,6 +1149,8 @@ export default function Payment({
                   <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   Enviando...
                 </span>
+              ) : orderItems.length === 0 ? (
+                'Agrega productos para continuar'
               ) : (
                 <span className="flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5" />

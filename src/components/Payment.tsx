@@ -368,7 +368,7 @@ export default function Payment({
   const canProceedWithPayment = () => {
     // Validar teléfono
     if (!hasExistingPhone && (!userPhone.trim() || !validatePhone(userPhone))) {
-      return { canProceed: false, message: 'Por favor ingresa un número de teléfono válido (10 dígitos)' };
+      return { canProceed: false, message: 'Por favor ingresa tu número de teléfono' };
     }
 
     // Validar tipo de entrega
@@ -920,11 +920,8 @@ export default function Payment({
                   value={userPhone}
                   onChange={handlePhoneChange}
                   placeholder="5512345678"
-                  className={`mt-1 ${phoneError ? 'border-red-500' : ''}`}
+                  className={`mt-1 ${(!hasExistingPhone && userPhone && !validatePhone(userPhone)) ? 'border-red-500' : ''}`}
                 />
-                {phoneError && (
-                  <p className="text-red-500 text-sm mt-1">{phoneError}</p>
-                )}
               </div>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-blue-800 text-sm">
@@ -954,7 +951,7 @@ export default function Payment({
         )}
 
         {/* Validation Message */}
-        {!canProceedWithPayment().canProceed && (
+        {/* {!canProceedWithPayment().canProceed && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center">
@@ -965,7 +962,7 @@ export default function Payment({
               </p>
             </div>
           </div>
-        )}
+        )} */}
 
         {/* Payment Method Selection */}
         <div className="space-y-3">

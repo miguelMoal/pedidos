@@ -171,9 +171,10 @@ export default function OrderConfirmation({
             {!isPaid && (
               <Button
                 onClick={onProceedToPayment}
-                className="w-full bg-[#046741] hover:bg-[#035530] text-white h-12 rounded-xl"
+                disabled={orderItems.length === 0}
+                className="w-full bg-[#046741] hover:bg-[#035530] text-white h-12 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Ir a pagar →
+                {orderItems.length === 0 ? 'Agrega productos para continuar' : 'Ir a pagar →'}
               </Button>
             )}
             <Button

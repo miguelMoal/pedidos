@@ -71,10 +71,17 @@ export default function App() {
 
   // Actualizar el estado cuando se carga la orden
   useEffect(() => {
-    if (order && order.status && currentScreen === 'tracking') {
-      setOrderStatus(order.status as OrderStatus);
+    if (order && order.status) {
+      // Si el status es BOT_READY, cambiarlo automáticamente a INIT en Supabase
+      if (order.status === 'BOT_READY') {
+        setOrderStatus('INIT');
+        // Actualizar en Supabase
+        updateOrderStatus({ status: 'INIT' });
+      } else {
+        setOrderStatus(order.status as OrderStatus);
+      }
     }
-  }, [order, currentScreen]);
+  }, [order, currentScreen, updateOrderStatus]);
   
   // Mock order from WhatsApp
   const [orderItems, setOrderItems] = useState<OrderItem[]>([
@@ -216,7 +223,14 @@ export default function App() {
     } else if (screen === 'tracking') {
       // Si hay una orden cargada, usar su estado real
       if (order && order.status) {
-        setOrderStatus(order.status as OrderStatus);
+        // Si el status es BOT_READY, cambiarlo automáticamente a INIT en Supabase
+        if (order.status === 'BOT_READY') {
+          setOrderStatus('INIT');
+          // Actualizar en Supabase
+          updateOrderStatus({ status: 'INIT' });
+        } else {
+          setOrderStatus(order.status as OrderStatus);
+        }
       } else {
         // Si no hay orden cargada, usar PAYED como fallback
         setOrderStatus(orderStatus === 'INIT' || orderStatus === 'EDITANDO' || orderStatus === 'PENDIENTE_PAGO' ? 'PAYED' : orderStatus);

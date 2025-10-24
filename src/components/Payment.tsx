@@ -142,19 +142,36 @@ export default function Payment({
         
         try {
           if (order.order_type === 'CASETA') {
+            console.log('Cargando datos de CASETA para orden:', order.id);
             const boothData = await getItemBoothByOrderId(order.id);
+            console.log('Respuesta de getItemBoothByOrderId:', boothData);
             if (boothData) {
+              console.log('Estableciendo datos de caseta:', {
+                car_model: boothData.car_model,
+                plates: boothData.plates
+              });
               setCarModel(boothData.car_model || '');
               setPlates(boothData.plates || '');
               console.log('Datos de caseta cargados:', boothData);
+            } else {
+              console.log('No se encontraron datos de caseta para la orden');
             }
           } else if (order.order_type === 'GUBERNAMENTAL') {
+            console.log('Cargando datos de GUBERNAMENTAL para orden:', order.id);
             const gubernamentalData = await getItemGubernamentalByOrderId(order.id);
+            console.log('Respuesta de getItemGubernamentalByOrderId:', gubernamentalData);
             if (gubernamentalData) {
+              console.log('Estableciendo datos gubernamentales:', {
+                building: gubernamentalData.building,
+                floor: gubernamentalData.floor,
+                address: gubernamentalData.address
+              });
               setBuilding(gubernamentalData.building || '');
               setFloor(gubernamentalData.floor || '');
               setAddress((gubernamentalData as any).address || '');
               console.log('Datos gubernamentales cargados:', gubernamentalData);
+            } else {
+              console.log('No se encontraron datos gubernamentales para la orden');
             }
           }
         } catch (error) {
@@ -165,6 +182,74 @@ export default function Payment({
 
     loadExistingDeliveryData();
   }, [order?.order_type, order?.id]);
+
+  // Cargar datos cuando cambie el tipo de entrega
+  useEffect(() => {
+    const loadDataForDeliveryType = async () => {
+      if (deliveryType && order?.id) {
+        console.log('Cargando datos para tipo de entrega:', deliveryType);
+        
+        try {
+          if (deliveryType === 'CASETA') {
+            console.log('Cargando datos de CASETA para orden:', order.id);
+            const boothData = await getItemBoothByOrderId(order.id);
+            console.log('Respuesta de getItemBoothByOrderId:', boothData);
+            if (boothData) {
+              console.log('Estableciendo datos de caseta:', {
+                car_model: boothData.car_model,
+                plates: boothData.plates
+              });
+              setCarModel(boothData.car_model || '');
+              setPlates(boothData.plates || '');
+              console.log('Datos de caseta cargados:', boothData);
+            } else {
+              console.log('No se encontraron datos de caseta para la orden');
+              // Limpiar campos si no hay datos
+              setCarModel('');
+              setPlates('');
+            }
+          } else if (deliveryType === 'GUBERNAMENTAL') {
+            console.log('Cargando datos de GUBERNAMENTAL para orden:', order.id);
+            const gubernamentalData = await getItemGubernamentalByOrderId(order.id);
+            console.log('Respuesta de getItemGubernamentalByOrderId:', gubernamentalData);
+            if (gubernamentalData) {
+              console.log('Estableciendo datos gubernamentales:', {
+                building: gubernamentalData.building,
+                floor: gubernamentalData.floor,
+                address: gubernamentalData.address
+              });
+              setBuilding(gubernamentalData.building || '');
+              setFloor(gubernamentalData.floor || '');
+              setAddress((gubernamentalData as any).address || '');
+              console.log('Datos gubernamentales cargados:', gubernamentalData);
+            } else {
+              console.log('No se encontraron datos gubernamentales para la orden');
+              // Limpiar campos si no hay datos
+              setBuilding('');
+              setFloor('');
+              setAddress('');
+            }
+          }
+        } catch (error) {
+          console.error('Error al cargar datos para tipo de entrega:', error);
+        }
+      }
+    };
+
+    loadDataForDeliveryType();
+  }, [deliveryType, order?.id]);
+
+  // Debug: Verificar valores de estados
+  useEffect(() => {
+    console.log('Estados de entrega actuales:', {
+      deliveryType,
+      carModel,
+      plates,
+      building,
+      floor,
+      address
+    });
+  }, [deliveryType, carModel, plates, building, floor, address]);
 
   // Función para aplicar cupón
   const handleApplyCoupon = async () => {

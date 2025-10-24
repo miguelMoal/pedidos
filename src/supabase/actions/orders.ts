@@ -359,7 +359,7 @@ export const getItemBoothByOrderId = async (orderId: number) => {
       .from('item_booth')
       .select('*')
       .eq('order_id', orderId)
-      .maybeSingle(); // Usar maybeSingle() en lugar de single()
+      .limit(1); // Limitar a 1 resultado para evitar múltiples filas
 
     if (error) {
       console.error('Error al obtener datos de caseta:', error);
@@ -367,7 +367,7 @@ export const getItemBoothByOrderId = async (orderId: number) => {
     }
 
     console.log('getItemBoothByOrderId - Datos obtenidos:', data);
-    return data; // Retorna null si no hay datos, o el objeto si existe
+    return data && data.length > 0 ? data[0] : null; // Retorna el primer elemento o null
   } catch (error) {
     console.error('Error en getItemBoothByOrderId:', error);
     throw error;
@@ -383,7 +383,7 @@ export const getItemGubernamentalByOrderId = async (orderId: number) => {
       .from('item_gubernamental')
       .select('*')
       .eq('order_id', orderId)
-      .maybeSingle(); // Usar maybeSingle() en lugar de single()
+      .limit(1); // Limitar a 1 resultado para evitar múltiples filas
 
     if (error) {
       console.error('Error al obtener datos gubernamentales:', error);
@@ -391,7 +391,7 @@ export const getItemGubernamentalByOrderId = async (orderId: number) => {
     }
 
     console.log('getItemGubernamentalByOrderId - Datos obtenidos:', data);
-    return data; // Retorna null si no hay datos, o el objeto si existe
+    return data && data.length > 0 ? data[0] : null; // Retorna el primer elemento o null
   } catch (error) {
     console.error('Error en getItemGubernamentalByOrderId:', error);
     throw error;

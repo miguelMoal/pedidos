@@ -342,9 +342,9 @@ export default function Payment({
     return result;
   };
 
-  // Validar teléfono
+  // Validar teléfono (solo 10 dígitos)
   const validatePhone = (phoneNumber: string): boolean => {
-    const phoneRegex = /^(\+52|52)?[0-9]{10}$/;
+    const phoneRegex = /^[0-9]{10}$/;
     const cleanPhone = phoneNumber.replace(/\s/g, '');
     return phoneRegex.test(cleanPhone);
   };
@@ -352,25 +352,55 @@ export default function Payment({
   // Manejar cambio de teléfono
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    const cleanValue = value.replace(/[^\d\s+]/g, '');
+    // Solo permitir números y limitar a 10 dígitos
+    const cleanValue = value.replace(/[^\d]/g, '').slice(0, 10);
     setUserPhone(cleanValue);
     if (phoneError) setPhoneError('');
+  };
+
+  // Formatear teléfono con prefijo 521 para Supabase
+  const formatPhoneForSupabase = (phone: string): string => {
+    const cleanPhone = phone.replace(/\s/g, '');
+    return `521${cleanPhone}`;
+  };
+
+  // Validar si se puede proceder con el pago
+  const canProceedWithPayment = () => {
+    // Validar teléfono
+    if (!hasExistingPhone && (!userPhone.trim() || !validatePhone(userPhone))) {
+      return { canProceed: false, message: 'Por favor ingresa un número de teléfono válido (10 dígitos)' };
+    }
+
+    // Validar tipo de entrega
+    if (!deliveryType) {
+      return { canProceed: false, message: 'Por favor selecciona un tipo de entrega' };
+    }
+
+    // Validar campos según el tipo de entrega
+    if (deliveryType === 'CASETA') {
+      if (!carModel.trim() || !plates.trim()) {
+        return { canProceed: false, message: 'Por favor completa todos los datos de caseta (modelo y placas)' };
+      }
+    } else if (deliveryType === 'GUBERNAMENTAL') {
+      if (!building.trim() || !floor.trim() || !address.trim()) {
+        return { canProceed: false, message: 'Por favor completa todos los datos gubernamentales (edificio, piso y dirección)' };
+      }
+    }
+
+    return { canProceed: true, message: '' };
   };
 
   const handleCardPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validar teléfono solo si no hay uno existente
-    if (!hasExistingPhone) {
-      if (!userPhone.trim()) {
-        setPhoneError('Por favor ingresa tu número de teléfono');
-        return;
-      }
-
-      if (!validatePhone(userPhone)) {
-        setPhoneError('Por favor ingresa un número de teléfono válido (10 dígitos)');
-        return;
-      }
+    // Validar si se puede proceder con el pago
+    const validation = canProceedWithPayment();
+    if (!validation.canProceed) {
+      toast.error('Datos incompletos', {
+        description: validation.message,
+        duration: 4000
+      });
+      return;
     }
     
     setIsProcessing(true);
@@ -392,7 +422,7 @@ export default function Payment({
           confirmation_code: verificationCode,
           coupon_applied: couponApplied ? (order.coupon_applied || null) : null,
           order_type: deliveryType,
-          ...(hasExistingPhone ? {} : { user_phone: userPhone })
+          ...(hasExistingPhone ? {} : { user_phone: formatPhoneForSupabase(userPhone) })
         };
         console.log('Payment - Datos a enviar a updateOrderStatus:', updateData);
         
@@ -456,17 +486,14 @@ export default function Payment({
   };
 
   const handleTransferPayment = async () => {
-    // Validar teléfono solo si no hay uno existente
-    if (!hasExistingPhone) {
-      if (!userPhone.trim()) {
-        setPhoneError('Por favor ingresa tu número de teléfono');
-        return;
-      }
-
-      if (!validatePhone(userPhone)) {
-        setPhoneError('Por favor ingresa un número de teléfono válido (10 dígitos)');
-        return;
-      }
+    // Validar si se puede proceder con el pago
+    const validation = canProceedWithPayment();
+    if (!validation.canProceed) {
+      toast.error('Datos incompletos', {
+        description: validation.message,
+        duration: 4000
+      });
+      return;
     }
     
     setIsProcessing(true);
@@ -489,7 +516,7 @@ export default function Payment({
           confirmation_code: verificationCode,
           coupon_applied: couponApplied ? (order.coupon_applied || null) : null,
           order_type: deliveryType,
-          ...(hasExistingPhone ? {} : { user_phone: userPhone })
+          ...(hasExistingPhone ? {} : { user_phone: formatPhoneForSupabase(userPhone) })
         };
         console.log('Payment - Datos a enviar a updateOrderStatus (transfer):', updateData);
         
@@ -892,7 +919,7 @@ export default function Payment({
                   type="tel"
                   value={userPhone}
                   onChange={handlePhoneChange}
-                  placeholder="+52 55 1234 5678"
+                  placeholder="5512345678"
                   className={`mt-1 ${phoneError ? 'border-red-500' : ''}`}
                 />
                 {phoneError && (
@@ -902,6 +929,9 @@ export default function Payment({
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-blue-800 text-sm">
                   📱 Usaremos este número para contactarte sobre tu pedido
+                </p>
+                <p className="text-blue-700 text-xs mt-1">
+                  Ingresa solo los 10 dígitos (ej: 5512345678)
                 </p>
               </div>
             </div>
@@ -918,6 +948,20 @@ export default function Payment({
               </p>
               <p className="text-green-700 text-sm">
                 Usaremos este número para contactarte sobre tu pedido
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Validation Message */}
+        {!canProceedWithPayment().canProceed && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs font-bold">!</span>
+              </div>
+              <p className="text-yellow-800 text-sm font-medium">
+                {canProceedWithPayment().message}
               </p>
             </div>
           </div>
@@ -1035,8 +1079,8 @@ export default function Payment({
 
             <Button
               type="submit"
-              disabled={isProcessing}
-              className="w-full bg-[#046741] hover:bg-[#035530] text-white h-12 rounded-xl"
+              disabled={isProcessing || !canProceedWithPayment().canProceed}
+              className="w-full bg-[#046741] hover:bg-[#035530] text-white h-12 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isProcessing ? (
                 <span className="flex items-center gap-2">
@@ -1077,8 +1121,8 @@ export default function Payment({
 
             <Button
               onClick={handleTransferPayment}
-              disabled={isProcessing}
-              className="w-full bg-[#046741] hover:bg-[#035530] text-white h-12 rounded-xl"
+              disabled={isProcessing || !canProceedWithPayment().canProceed}
+              className="w-full bg-[#046741] hover:bg-[#035530] text-white h-12 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isProcessing ? (
                 <span className="flex items-center gap-2">

@@ -14,15 +14,15 @@ export type OrderWithRelations = Order & {
   } | null;
   item_order?: Array<{
     id: number;
-    product_id: number;
+    product_id: number | null;
     quantity: number;
     products: {
       id: number;
       name: string;
       price: number;
       image_url: string;
-      business: string;
-    };
+      business: "JAGUARES" | "PUESTO";
+    } | null;
   }>;
 };
 
@@ -282,7 +282,13 @@ export const updateCouponApplied = async (orderId: number, couponId: number | nu
       .from('orders')
       .update({ coupon_applied: couponId })
       .eq('id', orderId)
-      .select()
+      .select(`
+        *,
+        send_price (
+          id,
+          price
+        )
+      `)
       .single();
 
     if (error) {
